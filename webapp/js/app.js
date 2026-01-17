@@ -86,6 +86,7 @@ function selectSuggestion(index) {
     document.getElementById('userCity').value = addr.city || addr.settlement || addr.region || '';
     document.getElementById('userStreet').value = addr.street || '';
     document.getElementById('userHouse').value = [addr.house, addr.block].filter(Boolean).join(' корп. ') || '';
+    document.getElementById('userApartment').value = addr.flat || '';
 
     hideSuggestions();
 }
