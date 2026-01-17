@@ -1,0 +1,7 @@
+{
+    "bot_token": "YOUR_BOT_TOKEN_HERE",
+    "main_admin_id": 123456789,
+    "log_level": "INFO",
+    "log_file": "logs/bot.log",
+    "webapp_url": ""
+}

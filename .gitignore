@@ -1,0 +1,40 @@
+# Build directories
+cmake-build-debug/
+cmake-build-release/
+build/
+out/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Compiled files
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+
+# Logs
+logs/
+*.log
+
+# Database
+*.db
+*.db-journal
+
+# Config with secrets
+json-cfg/config.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# vcpkg (managed externally)
+vcpkg_installed/

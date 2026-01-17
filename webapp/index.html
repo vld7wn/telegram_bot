@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Заявка на подключение</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <h1 class="header-title">Заявка на подключение</h1>
+            <p class="header-subtitle" id="stepTitle">Шаг 1 из 5: Выбор точки</p>
+        </header>
+
+        <!-- Screen 1: Trade Point Selection -->
+        <section class="screen active" id="screen1">
+            <h2 class="section-title">Выберите торговую точку</h2>
+            <div class="trade-points-grid" id="tradePointsGrid">
+                <!-- Заполняется динамически -->
+            </div>
+        </section>
+
+        <!-- Screen 2: Tariff Selection -->
+        <section class="screen" id="screen2">
+            <h2 class="section-title">Выберите тариф</h2>
+            <div class="tariffs-list" id="tariffsList">
+                <!-- Заполняется динамически -->
+            </div>
+        </section>
+
+        <!-- Screen 3: Speed & Options -->
+        <section class="screen" id="screen3">
+            <h2 class="section-title">Скорость и опции</h2>
+            
+            <div class="selected-tariff-card" id="selectedTariffCard">
+                <!-- Заполняется динамически -->
+            </div>
+
+            <div class="speed-options" id="speedOptions">
+                <!-- Заполняется динамически -->
+            </div>
+
+            <div class="option-toggle" id="tvBoxToggle" style="display: none;">
+                <div class="toggle-info">
+                    <span class="toggle-label">ТВ-приставка</span>
+                    <span class="toggle-price" id="tvBoxPrice"></span>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="tvBoxCheckbox">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </section>
+
+        <!-- Screen 4: User Data -->
+        <section class="screen" id="screen4">
+            <h2 class="section-title">Ваши данные</h2>
+            
+            <div class="form-group">
+                <input type="text" id="userName" class="neon-input" placeholder=" " required>
+                <label class="floating-label">Имя</label>
+            </div>
+
+            <div class="form-group">
+                <input type="tel" id="userPhone" class="neon-input" placeholder=" " required>
+                <label class="floating-label">Телефон</label>
+            </div>
+
+            <div class="form-group">
+                <input type="email" id="userEmail" class="neon-input" placeholder=" " required>
+                <label class="floating-label">Email</label>
+            </div>
+
+            <div class="form-group">
+                <input type="text" id="userCity" class="neon-input" placeholder=" " required>
+                <label class="floating-label">Город</label>
+            </div>
+
+            <div class="form-group">
+                <input type="text" id="userStreet" class="neon-input" placeholder=" " required>
+                <label class="floating-label">Улица</label>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group half">
+                    <input type="text" id="userHouse" class="neon-input" placeholder=" " required>
+                    <label class="floating-label">Дом</label>
+                </div>
+                <div class="form-group half">
+                    <input type="text" id="userApartment" class="neon-input" placeholder=" ">
+                    <label class="floating-label">Квартира</label>
+                </div>
+            </div>
+        </section>
+
+        <!-- Screen 5: Confirmation -->
+        <section class="screen" id="screen5">
+            <h2 class="section-title">Подтверждение</h2>
+            
+            <div class="summary-card">
+                <div class="summary-row">
+                    <span class="summary-label">Тариф:</span>
+                    <span class="summary-value" id="summaryTariff"></span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Скорость:</span>
+                    <span class="summary-value" id="summarySpeed"></span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">ТВ-приставка:</span>
+                    <span class="summary-value" id="summaryTvBox"></span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Имя:</span>
+                    <span class="summary-value" id="summaryName"></span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Телефон:</span>
+                    <span class="summary-value" id="summaryPhone"></span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Адрес:</span>
+                    <span class="summary-value" id="summaryAddress"></span>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-row total">
+                    <span class="summary-label">Ежемесячно:</span>
+                    <span class="summary-value" id="summaryTotal"></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Navigation Buttons -->
+        <div class="navigation">
+            <button class="btn btn-back" id="btnBack" style="display: none;">
+                <span class="btn-icon">←</span> Назад
+            </button>
+            <button class="btn btn-next" id="btnNext">
+                Далее <span class="btn-icon">→</span>
+            </button>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

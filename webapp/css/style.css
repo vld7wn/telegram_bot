@@ -1,0 +1,516 @@
+/* ===========================================
+   Telegram WebApp - Premium Dark Glassmorphism
+   =========================================== */
+
+:root {
+    /* Цветовая палитра */
+    --bg-gradient-start: #0f0c29;
+    --bg-gradient-mid: #302b63;
+    --bg-gradient-end: #24243e;
+    
+    --glass-bg: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-shadow: rgba(0, 0, 0, 0.3);
+    
+    --neon-primary: #00d9ff;
+    --neon-secondary: #7c3aed;
+    --neon-accent: #f472b6;
+    --neon-success: #10b981;
+    --neon-glow: 0 0 20px rgba(0, 217, 255, 0.5);
+    
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.7);
+    --text-muted: rgba(255, 255, 255, 0.4);
+    
+    /* Размеры */
+    --border-radius: 16px;
+    --border-radius-sm: 8px;
+    --spacing: 16px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-mid), var(--bg-gradient-end));
+    min-height: 100vh;
+    color: var(--text-primary);
+    overflow-x: hidden;
+}
+
+/* Космический фон */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.3), transparent),
+        radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.2), transparent),
+        radial-gradient(1px 1px at 90px 40px, rgba(255,255,255,0.4), transparent),
+        radial-gradient(2px 2px at 130px 80px, rgba(255,255,255,0.2), transparent),
+        radial-gradient(1px 1px at 160px 30px, rgba(255,255,255,0.3), transparent);
+    background-size: 200px 100px;
+    animation: stars 8s linear infinite;
+    pointer-events: none;
+    z-index: -1;
+}
+
+@keyframes stars {
+    from { background-position: 0 0; }
+    to { background-position: 200px 100px; }
+}
+
+.app-container {
+    max-width: 100%;
+    min-height: 100vh;
+    padding: var(--spacing);
+    padding-bottom: 100px;
+}
+
+/* ========== HEADER ========== */
+.header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 4px;
+    background: var(--glass-bg);
+    border-radius: 2px;
+    margin-bottom: 16px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    width: 20%;
+    background: linear-gradient(90deg, var(--neon-primary), var(--neon-secondary));
+    border-radius: 2px;
+    transition: width 0.5s ease;
+    box-shadow: var(--neon-glow);
+}
+
+.header-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.header-subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+/* ========== SCREENS ========== */
+.screen {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.screen.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--text-primary);
+}
+
+/* ========== GLASSMORPHISM CARDS ========== */
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius);
+    padding: var(--spacing);
+    margin-bottom: 12px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.glass-card:hover {
+    border-color: var(--neon-primary);
+    box-shadow: 0 0 20px rgba(0, 217, 255, 0.2);
+}
+
+.glass-card.selected {
+    border-color: var(--neon-primary);
+    box-shadow: 0 0 30px rgba(0, 217, 255, 0.4), inset 0 0 20px rgba(0, 217, 255, 0.1);
+}
+
+/* ========== TRADE POINTS GRID ========== */
+.trade-points-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.trade-point-btn {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-sm);
+    padding: 16px 8px;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.trade-point-btn:hover {
+    border-color: var(--neon-primary);
+    box-shadow: var(--neon-glow);
+}
+
+.trade-point-btn.selected {
+    border-color: var(--neon-primary);
+    background: rgba(0, 217, 255, 0.1);
+    box-shadow: var(--neon-glow);
+}
+
+/* ========== TARIFF CARDS ========== */
+.tariff-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.tariff-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, var(--neon-primary), var(--neon-secondary));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.tariff-card.selected::before {
+    opacity: 1;
+}
+
+.tariff-name {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.tariff-speed {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--neon-primary);
+    margin-bottom: 4px;
+}
+
+.tariff-price {
+    font-size: 16px;
+    color: var(--text-secondary);
+}
+
+.tariff-price .amount {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.tariff-features {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--glass-border);
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+/* ========== SPEED OPTIONS ========== */
+.speed-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.speed-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--neon-primary);
+}
+
+.speed-price {
+    font-size: 16px;
+    color: var(--text-secondary);
+}
+
+/* ========== TOGGLE SWITCH ========== */
+.option-toggle {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius);
+    padding: var(--spacing);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+}
+
+.toggle-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.toggle-label {
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.toggle-price {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.toggle-switch {
+    position: relative;
+    width: 52px;
+    height: 28px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 28px;
+    transition: 0.3s;
+}
+
+.toggle-slider::before {
+    position: absolute;
+    content: '';
+    height: 22px;
+    width: 22px;
+    left: 2px;
+    bottom: 2px;
+    background: var(--text-secondary);
+    border-radius: 50%;
+    transition: 0.3s;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    border-color: var(--neon-primary);
+    box-shadow: var(--neon-glow);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+    background: var(--neon-primary);
+    transform: translateX(24px);
+    box-shadow: 0 0 10px var(--neon-primary);
+}
+
+/* ========== NEON INPUT FIELDS ========== */
+.form-group {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.form-row {
+    display: flex;
+    gap: 12px;
+}
+
+.form-group.half {
+    flex: 1;
+}
+
+.neon-input {
+    width: 100%;
+    padding: 16px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-primary);
+    font-size: 16px;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.neon-input:focus {
+    border-color: var(--neon-primary);
+    box-shadow: 0 0 15px rgba(0, 217, 255, 0.3);
+}
+
+.neon-input:focus + .floating-label,
+.neon-input:not(:placeholder-shown) + .floating-label {
+    top: -8px;
+    left: 12px;
+    font-size: 12px;
+    color: var(--neon-primary);
+    background: var(--bg-gradient-mid);
+    padding: 0 6px;
+}
+
+.floating-label {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    font-size: 16px;
+    color: var(--text-muted);
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+/* ========== SUMMARY CARD ========== */
+.summary-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius);
+    padding: var(--spacing);
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+}
+
+.summary-label {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.summary-value {
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 500;
+    text-align: right;
+}
+
+.summary-divider {
+    height: 1px;
+    background: var(--glass-border);
+    margin: 8px 0;
+}
+
+.summary-row.total {
+    padding-top: 12px;
+}
+
+.summary-row.total .summary-value {
+    font-size: 20px;
+    color: var(--neon-primary);
+    text-shadow: var(--neon-glow);
+}
+
+/* ========== NAVIGATION BUTTONS ========== */
+.navigation {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    gap: 12px;
+    padding: var(--spacing);
+    background: linear-gradient(to top, var(--bg-gradient-end), transparent);
+    padding-top: 32px;
+}
+
+.btn {
+    flex: 1;
+    padding: 16px 24px;
+    border: none;
+    border-radius: var(--border-radius);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-back {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+}
+
+.btn-back:hover {
+    border-color: var(--text-secondary);
+}
+
+.btn-next {
+    background: linear-gradient(135deg, var(--neon-primary), var(--neon-secondary));
+    color: white;
+    box-shadow: 0 4px 20px rgba(0, 217, 255, 0.4);
+}
+
+.btn-next:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 30px rgba(0, 217, 255, 0.5);
+}
+
+.btn-next:active {
+    transform: translateY(0);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-icon {
+    font-size: 18px;
+}
+
+/* ========== SELECTED TARIFF CARD ========== */
+.selected-tariff-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--neon-primary);
+    border-radius: var(--border-radius);
+    padding: var(--spacing);
+    margin-bottom: 16px;
+    box-shadow: 0 0 20px rgba(0, 217, 255, 0.2);
+}
+
+.selected-tariff-card .tariff-name {
+    font-size: 16px;
+    color: var(--neon-primary);
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 360px) {
+    .trade-points-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

@@ -1,0 +1,130 @@
+[
+  {
+    "id": "riil",
+    "name": "Тариф 'РИИЛ Плюс'",
+    "mobile_connection_included": true,
+    "mobile_internet_gb": "50",
+    "mobile_minutes": "50",
+    "mobile_sms": "10",
+    "tv_kion": true,
+    "tv_channels": "",
+    "router_rental": "149 ₽/мес",
+    "tv_box_rental": "",
+    "connection_fee": "200 ₽",
+    "speeds": [
+      {
+        "value": "500",
+        "unit": "Мбит/с",
+        "price": "890"
+      },
+      {
+        "value": "1",
+        "unit": "Гбит/с",
+        "price": "1130"
+      }
+    ],
+    "internet_unlimited": true,
+    "internet_limit_gb": ""
+  },
+  {
+    "id": "khorosho",
+    "name": "Тариф 'МТС Дома Хорошо'",
+    "mobile_connection_included": true,
+    "mobile_internet_gb": "30 (разово на 3 мес.)",
+    "mobile_minutes": "",
+    "mobile_sms": "",
+    "tv_kion": true,
+    "tv_channels": "",
+    "router_rental": "149 ₽/мес",
+    "tv_box_rental": "",
+    "connection_fee": "200 ₽",
+    "speeds": [
+      {
+        "value": "200",
+        "unit": "Мбит/с",
+        "price": "650"
+      },
+      {
+        "value": "500",
+        "unit": "Мбит/с",
+        "price": "750"
+      },
+      {
+        "value": "1",
+        "unit": "Гбит/с",
+        "price": "1040"
+      }
+    ],
+    "internet_unlimited": false,
+    "internet_limit_gb": "Не указано"
+  },
+  {
+    "id": "otlichno",
+    "name": "Тариф 'МТС Дома Отлично'",
+    "mobile_connection_included": true,
+    "mobile_internet_gb": "30",
+    "mobile_minutes": "900",
+    "mobile_sms": "100",
+    "tv_kion": false,
+    "tv_channels": "Да, 200+ каналов",
+    "router_rental": "149 ₽/мес",
+    "tv_box_rental": "149 ₽/мес",
+    "connection_fee": "200 ₽",
+    "speeds": [
+      {
+        "value": "200",
+        "unit": "Мбит/с",
+        "price": "495",
+        "promo_price_duration_months": "2",
+        "full_price": "990"
+      },
+      {
+        "value": "500",
+        "unit": "Мбит/с",
+        "price": "520",
+        "promo_price_duration_months": "2",
+        "full_price": "1040"
+      },
+      {
+        "value": "1",
+        "unit": "Гбит/с",
+        "price": "615",
+        "promo_price_duration_months": "2",
+        "full_price": "1230"
+      }
+    ],
+    "internet_unlimited": true,
+    "internet_limit_gb": ""
+  },
+  {
+    "id": "super",
+    "name": "Тариф 'МТС Дома Супер'",
+    "mobile_connection_included": true,
+    "mobile_internet_gb": "50",
+    "mobile_minutes": "1200",
+    "mobile_sms": "50",
+    "tv_kion": true,
+    "tv_channels": "Да, 200+ каналов",
+    "router_rental": "149 ₽/мес",
+    "tv_box_rental": "149 ₽/мес",
+    "connection_fee": "200 ₽",
+    "speeds": [
+      {
+        "value": "500",
+        "unit": "Мбит/с",
+        "price": "600",
+        "promo_price_duration_months": "2",
+        "full_price": "1200"
+      },
+      {
+        "value": "1",
+        "unit": "Гбит/с",
+        "price": "725",
+        "promo_price_duration_months": "2",
+        "full_price": "1450"
+      }
+    ],
+    "internet_unlimited": true,
+    "internet_limit_gb": ""
+  }
+]
