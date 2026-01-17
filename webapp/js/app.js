@@ -171,20 +171,53 @@ function updateUI() {
 }
 
 // ========== ЭКРАН 1: ТОРГОВЫЕ ТОЧКИ ==========
+let filteredTradePoints = [];
+
 function renderTradePoints() {
     const grid = document.getElementById('tradePointsGrid');
-    grid.innerHTML = CONFIG.tradePoints.map((tp, index) => `
+    const points = filteredTradePoints.length > 0 ? filteredTradePoints : CONFIG.tradePoints;
+
+    if (points.length === 0) {
+        grid.innerHTML = '<div class="no-results">Ничего не найдено</div>';
+        return;
+    }
+
+    grid.innerHTML = points.map((tp) => `
         <button class="trade-point-btn ${state.tradePoint?.code === tp.code ? 'selected' : ''}" 
-                onclick="selectTradePoint(${index})">
+                onclick="selectTradePointByCode('${tp.code}')">
             <span class="tp-code">${tp.code}</span>
             <span class="tp-address">${tp.address.substring(tp.address.indexOf(',') + 2)}</span>
         </button>
     `).join('');
 }
 
-function selectTradePoint(index) {
-    state.tradePoint = CONFIG.tradePoints[index];
+function selectTradePointByCode(code) {
+    state.tradePoint = CONFIG.tradePoints.find(tp => tp.code === code);
     renderTradePoints();
+}
+
+function filterTradePoints(query) {
+    const searchTerm = query.toLowerCase().trim();
+
+    if (!searchTerm) {
+        filteredTradePoints = [];
+    } else {
+        filteredTradePoints = CONFIG.tradePoints.filter(tp =>
+            tp.code.toLowerCase().includes(searchTerm) ||
+            tp.address.toLowerCase().includes(searchTerm)
+        );
+    }
+
+    renderTradePoints();
+}
+
+function setupSearchListener() {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            filterTradePoints(e.target.value);
+        });
+    }
 }
 
 // ========== ЭКРАН 2: ТАРИФЫ ==========
@@ -375,6 +408,7 @@ async function init() {
     renderTradePoints();
     renderTariffs();
     setupEventListeners();
+    setupSearchListener();
     updateUI();
 }
 
