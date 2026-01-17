@@ -405,13 +405,27 @@ function updateSummaryScreen() {
     ].filter(Boolean).join(', ');
     document.getElementById('summaryAddress').textContent = address || '-';
 
-    // Расчёт итоговой суммы
-    let total = parseInt(state.speed?.price || 0);
+    // Расчёт стоимости
+    const connectionFee = 500; // Стоимость подключения
+    const routerRental = 149; // Аренда роутера в месяц
+    const tariffPrice = parseInt(state.speed?.price || 0);
+
+    // ТВ-приставка
+    let tvBoxPrice = 0;
     if (state.needsTvBox && state.tariff?.tvBoxRental) {
-        const tvPrice = parseInt(state.tariff.tvBoxRental);
-        if (!isNaN(tvPrice)) total += tvPrice;
+        tvBoxPrice = parseInt(state.tariff.tvBoxRental) || 0;
     }
-    document.getElementById('summaryTotal').textContent = `${total} ₽/мес`;
+
+    // Первый месяц = подключение + тариф + роутер + ТВ-приставка (если есть)
+    const firstMonth = connectionFee + tariffPrice + routerRental + tvBoxPrice;
+
+    // Со второго месяца = тариф + роутер + ТВ-приставка
+    const monthlyPayment = tariffPrice + routerRental + tvBoxPrice;
+
+    document.getElementById('summaryConnectionFee').textContent = `${connectionFee} ₽`;
+    document.getElementById('summaryRouterRental').textContent = `${routerRental} ₽/мес`;
+    document.getElementById('summaryFirstMonth').textContent = `${firstMonth} ₽`;
+    document.getElementById('summaryMonthly').textContent = `${monthlyPayment} ₽/мес`;
 }
 
 // ========== ВАЛИДАЦИЯ ==========
