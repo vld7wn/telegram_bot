@@ -433,7 +433,7 @@ void sendMainMenu(TgBot::Bot& bot, int64_t chat_id) {
     // Если есть WebApp URL, добавляем кнопку с WebApp
     if (!config.webapp_url.empty()) {
         auto btn_webapp = std::make_shared<TgBot::KeyboardButton>();
-        btn_webapp->text = "📝 Оставить заявку (WebApp)";
+        btn_webapp->text = "📝 Оставить заявку";
         btn_webapp->webApp = std::make_shared<TgBot::WebAppInfo>();
         btn_webapp->webApp->url = config.webapp_url;
         row1.push_back(btn_webapp);

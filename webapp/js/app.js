@@ -5,60 +5,78 @@
 
 // ========== КОНФИГУРАЦИЯ ==========
 const CONFIG = {
-    // Демо-данные (в продакшене будут загружаться с сервера)
-    tradePoints: ['ТТ-001', 'ТТ-002', 'ТТ-003', 'ТТ-004', 'ТТ-005', 'ТТ-006'],
-    tariffs: [
-        {
-            id: 'home_internet',
-            name: 'Домашний Интернет',
-            speeds: [
-                { value: '100', unit: 'Мбит/с', price: '500', fullPrice: '600' },
-                { value: '300', unit: 'Мбит/с', price: '700', fullPrice: '850' },
-                { value: '500', unit: 'Мбит/с', price: '900', fullPrice: '1100' }
-            ],
-            features: 'Безлимитный трафик, Wi-Fi роутер в комплекте',
-            routerRental: '99 ₽/мес',
-            tvBoxRental: '150 ₽/мес',
-            connectionFee: '0 ₽'
-        },
-        {
-            id: 'home_plus',
-            name: 'Домашний Плюс',
-            speeds: [
-                { value: '500', unit: 'Мбит/с', price: '890', fullPrice: '990' },
-                { value: '1', unit: 'Гбит/с', price: '1290', fullPrice: '1490' }
-            ],
-            features: 'Интернет + 180 ТВ-каналов',
-            routerRental: '0 ₽/мес',
-            tvBoxRental: '99 ₽/мес',
-            connectionFee: '0 ₽'
-        },
-        {
-            id: 'maximum',
-            name: 'Максимум',
-            speeds: [
-                { value: '1', unit: 'Гбит/с', price: '1490', fullPrice: '1690' },
-                { value: '2', unit: 'Гбит/с', price: '1990', fullPrice: '2290' }
-            ],
-            features: 'Максимальная скорость + 240 ТВ-каналов + Антивирус',
-            routerRental: '0 ₽/мес',
-            tvBoxRental: '0 ₽/мес',
-            connectionFee: '0 ₽'
-        }
-    ]
+    // Данные загружаются из JSON файлов
+    tradePoints: [],
+    tariffs: []
 };
+
+// ========== ЗАГРУЗКА ДАННЫХ ==========
+async function loadTradePoints() {
+    try {
+        const response = await fetch('data/trade_points.json');
+        const data = await response.json();
+        CONFIG.tradePoints = data.map(tp => ({
+            code: tp.code,
+            address: tp.address
+        }));
+    } catch (error) {
+        console.error('Failed to load trade points:', error);
+        // Fallback данные
+        CONFIG.tradePoints = [{ code: 'DEFAULT', address: 'Офис МТС' }];
+    }
+}
+
+async function loadTariffs() {
+    try {
+        const response = await fetch('data/tariffs.json');
+        const data = await response.json();
+        CONFIG.tariffs = data.map(t => ({
+            id: t.id,
+            name: t.name,
+            speeds: t.speeds.map(s => ({
+                value: s.value,
+                unit: s.unit,
+                price: s.price,
+                fullPrice: s.full_price || s.price,
+                promoMonths: s.promo_price_duration_months || ''
+            })),
+            features: buildFeatures(t),
+            routerRental: t.router_rental || '',
+            tvBoxRental: t.tv_box_rental || '',
+            connectionFee: t.connection_fee || ''
+        }));
+    } catch (error) {
+        console.error('Failed to load tariffs:', error);
+    }
+}
+
+function buildFeatures(tariff) {
+    const features = [];
+    if (tariff.internet_unlimited) features.push('Безлимитный интернет');
+    if (tariff.mobile_connection_included) {
+        let mobile = 'Мобильная связь';
+        if (tariff.mobile_internet_gb) mobile += ` (${tariff.mobile_internet_gb} ГБ`;
+        if (tariff.mobile_minutes) mobile += `, ${tariff.mobile_minutes} мин`;
+        if (tariff.mobile_sms) mobile += `, ${tariff.mobile_sms} SMS`;
+        mobile += ')';
+        features.push(mobile);
+    }
+    if (tariff.tv_kion) features.push('KION');
+    if (tariff.tv_channels) features.push(tariff.tv_channels);
+    return features.join(' • ') || 'Интернет';
+}
 
 // ========== СОСТОЯНИЕ ПРИЛОЖЕНИЯ ==========
 const state = {
     currentScreen: 1,
     totalScreens: 5,
-    
+
     // Выбранные данные
     tradePoint: null,
     tariff: null,
     speed: null,
     needsTvBox: false,
-    
+
     // Данные пользователя
     userData: {
         name: '',
@@ -78,10 +96,10 @@ function initTelegramWebApp() {
     if (tg) {
         tg.ready();
         tg.expand();
-        
+
         // Применяем тему Telegram (опционально)
         // document.body.style.backgroundColor = tg.backgroundColor;
-        
+
         // Настраиваем кнопку закрытия
         tg.BackButton.onClick(() => {
             if (state.currentScreen > 1) {
@@ -96,13 +114,13 @@ function initTelegramWebApp() {
 // ========== НАВИГАЦИЯ ==========
 function goToScreen(screenNum) {
     if (screenNum < 1 || screenNum > state.totalScreens) return;
-    
+
     // Скрываем текущий экран
     document.getElementById(`screen${state.currentScreen}`).classList.remove('active');
-    
+
     // Показываем новый экран
     document.getElementById(`screen${screenNum}`).classList.add('active');
-    
+
     state.currentScreen = screenNum;
     updateUI();
 }
@@ -111,7 +129,7 @@ function updateUI() {
     // Обновляем прогресс-бар
     const progress = (state.currentScreen / state.totalScreens) * 100;
     document.getElementById('progressFill').style.width = `${progress}%`;
-    
+
     // Обновляем заголовок шага
     const titles = [
         'Выбор точки',
@@ -120,13 +138,13 @@ function updateUI() {
         'Ваши данные',
         'Подтверждение'
     ];
-    document.getElementById('stepTitle').textContent = 
+    document.getElementById('stepTitle').textContent =
         `Шаг ${state.currentScreen} из ${state.totalScreens}: ${titles[state.currentScreen - 1]}`;
-    
+
     // Показываем/скрываем кнопку "Назад"
     const btnBack = document.getElementById('btnBack');
     btnBack.style.display = state.currentScreen > 1 ? 'flex' : 'none';
-    
+
     // Меняем текст кнопки "Далее"
     const btnNext = document.getElementById('btnNext');
     if (state.currentScreen === state.totalScreens) {
@@ -134,7 +152,7 @@ function updateUI() {
     } else {
         btnNext.innerHTML = 'Далее <span class="btn-icon">→</span>';
     }
-    
+
     // Telegram Back Button
     if (tg) {
         if (state.currentScreen > 1) {
@@ -143,7 +161,7 @@ function updateUI() {
             tg.BackButton.hide();
         }
     }
-    
+
     // Обновляем экран-специфичный UI
     if (state.currentScreen === 3) {
         updateSpeedOptionsScreen();
@@ -155,16 +173,17 @@ function updateUI() {
 // ========== ЭКРАН 1: ТОРГОВЫЕ ТОЧКИ ==========
 function renderTradePoints() {
     const grid = document.getElementById('tradePointsGrid');
-    grid.innerHTML = CONFIG.tradePoints.map(point => `
-        <button class="trade-point-btn ${state.tradePoint === point ? 'selected' : ''}" 
-                onclick="selectTradePoint('${point}')">
-            ${point}
+    grid.innerHTML = CONFIG.tradePoints.map((tp, index) => `
+        <button class="trade-point-btn ${state.tradePoint?.code === tp.code ? 'selected' : ''}" 
+                onclick="selectTradePoint(${index})">
+            <span class="tp-code">${tp.code}</span>
+            <span class="tp-address">${tp.address.substring(tp.address.indexOf(',') + 2)}</span>
         </button>
     `).join('');
 }
 
-function selectTradePoint(point) {
-    state.tradePoint = point;
+function selectTradePoint(index) {
+    state.tradePoint = CONFIG.tradePoints[index];
     renderTradePoints();
 }
 
@@ -196,14 +215,14 @@ function selectTariff(tariffId) {
 // ========== ЭКРАН 3: СКОРОСТЬ И ОПЦИИ ==========
 function updateSpeedOptionsScreen() {
     if (!state.tariff) return;
-    
+
     // Выбранный тариф
     const card = document.getElementById('selectedTariffCard');
     card.innerHTML = `
         <div class="tariff-name">${state.tariff.name}</div>
         <div class="tariff-features">${state.tariff.features}</div>
     `;
-    
+
     // Опции скоростей
     const speedOptions = document.getElementById('speedOptions');
     speedOptions.innerHTML = state.tariff.speeds.map((speed, index) => `
@@ -213,7 +232,7 @@ function updateSpeedOptionsScreen() {
             <span class="speed-price">${speed.price} ₽/мес</span>
         </div>
     `).join('');
-    
+
     // ТВ-приставка
     const tvToggle = document.getElementById('tvBoxToggle');
     if (state.tariff.tvBoxRental && state.tariff.tvBoxRental !== '0 ₽/мес') {
@@ -233,12 +252,12 @@ function selectSpeed(index) {
 // ========== ЭКРАН 5: ПОДТВЕРЖДЕНИЕ ==========
 function updateSummaryScreen() {
     document.getElementById('summaryTariff').textContent = state.tariff?.name || '-';
-    document.getElementById('summarySpeed').textContent = 
+    document.getElementById('summarySpeed').textContent =
         state.speed ? `${state.speed.value} ${state.speed.unit}` : '-';
     document.getElementById('summaryTvBox').textContent = state.needsTvBox ? 'Да' : 'Нет';
     document.getElementById('summaryName').textContent = state.userData.name || '-';
     document.getElementById('summaryPhone').textContent = state.userData.phone || '-';
-    
+
     const address = [
         state.userData.city ? `г. ${state.userData.city}` : '',
         state.userData.street ? `ул. ${state.userData.street}` : '',
@@ -246,7 +265,7 @@ function updateSummaryScreen() {
         state.userData.apartment ? `кв. ${state.userData.apartment}` : ''
     ].filter(Boolean).join(', ');
     document.getElementById('summaryAddress').textContent = address || '-';
-    
+
     // Расчёт итоговой суммы
     let total = parseInt(state.speed?.price || 0);
     if (state.needsTvBox && state.tariff?.tvBoxRental) {
@@ -276,8 +295,8 @@ function validateCurrentScreen() {
 
 function validateUserData() {
     const { name, phone, email, city, street, house } = state.userData;
-    return name.trim() && phone.trim() && email.trim() && 
-           city.trim() && street.trim() && house.trim();
+    return name.trim() && phone.trim() && email.trim() &&
+        city.trim() && street.trim() && house.trim();
 }
 
 function collectUserData() {
@@ -295,7 +314,8 @@ function collectUserData() {
 // ========== ОТПРАВКА ДАННЫХ ==========
 function submitApplication() {
     const data = {
-        tradePoint: state.tradePoint,
+        tradePoint: state.tradePoint?.code || '',
+        tradePointAddress: state.tradePoint?.address || '',
         tariff: state.tariff.name,
         tariffId: state.tariff.id,
         speed: `${state.speed.value} ${state.speed.unit}`,
@@ -303,7 +323,7 @@ function submitApplication() {
         needsTvBox: state.needsTvBox,
         ...state.userData
     };
-    
+
     if (tg) {
         // Отправляем данные в Telegram
         tg.sendData(JSON.stringify(data));
@@ -321,24 +341,24 @@ function setupEventListeners() {
         if (state.currentScreen === 4) {
             collectUserData();
         }
-        
+
         if (!validateCurrentScreen()) {
             // TODO: показать ошибку валидации
             return;
         }
-        
+
         if (state.currentScreen === state.totalScreens) {
             submitApplication();
         } else {
             goToScreen(state.currentScreen + 1);
         }
     });
-    
+
     // Кнопка "Назад"
     document.getElementById('btnBack').addEventListener('click', () => {
         goToScreen(state.currentScreen - 1);
     });
-    
+
     // ТВ-приставка toggle
     document.getElementById('tvBoxCheckbox').addEventListener('change', (e) => {
         state.needsTvBox = e.target.checked;
@@ -346,8 +366,12 @@ function setupEventListeners() {
 }
 
 // ========== ИНИЦИАЛИЗАЦИЯ ==========
-function init() {
+async function init() {
     initTelegramWebApp();
+
+    // Загружаем данные из JSON
+    await Promise.all([loadTradePoints(), loadTariffs()]);
+
     renderTradePoints();
     renderTariffs();
     setupEventListeners();

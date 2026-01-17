@@ -29,8 +29,6 @@ logs/
 *.db
 *.db-journal
 
-# Config with secrets
-json-cfg/config.json
 
 # OS files
 .DS_Store

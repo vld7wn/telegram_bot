@@ -7,21 +7,21 @@
     --bg-gradient-start: #0f0c29;
     --bg-gradient-mid: #302b63;
     --bg-gradient-end: #24243e;
-    
+
     --glass-bg: rgba(255, 255, 255, 0.05);
     --glass-border: rgba(255, 255, 255, 0.1);
     --glass-shadow: rgba(0, 0, 0, 0.3);
-    
+
     --neon-primary: #00d9ff;
     --neon-secondary: #7c3aed;
     --neon-accent: #f472b6;
     --neon-success: #10b981;
     --neon-glow: 0 0 20px rgba(0, 217, 255, 0.5);
-    
+
     --text-primary: #ffffff;
     --text-secondary: rgba(255, 255, 255, 0.7);
     --text-muted: rgba(255, 255, 255, 0.4);
-    
+
     /* Размеры */
     --border-radius: 16px;
     --border-radius-sm: 8px;
@@ -50,12 +50,12 @@ body::before {
     left: 0;
     width: 100%;
     height: 100%;
-    background-image: 
-        radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.3), transparent),
-        radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.2), transparent),
-        radial-gradient(1px 1px at 90px 40px, rgba(255,255,255,0.4), transparent),
-        radial-gradient(2px 2px at 130px 80px, rgba(255,255,255,0.2), transparent),
-        radial-gradient(1px 1px at 160px 30px, rgba(255,255,255,0.3), transparent);
+    background-image:
+        radial-gradient(2px 2px at 20px 30px, rgba(255, 255, 255, 0.3), transparent),
+        radial-gradient(2px 2px at 40px 70px, rgba(255, 255, 255, 0.2), transparent),
+        radial-gradient(1px 1px at 90px 40px, rgba(255, 255, 255, 0.4), transparent),
+        radial-gradient(2px 2px at 130px 80px, rgba(255, 255, 255, 0.2), transparent),
+        radial-gradient(1px 1px at 160px 30px, rgba(255, 255, 255, 0.3), transparent);
     background-size: 200px 100px;
     animation: stars 8s linear infinite;
     pointer-events: none;
@@ -63,8 +63,13 @@ body::before {
 }
 
 @keyframes stars {
-    from { background-position: 0 0; }
-    to { background-position: 200px 100px; }
+    from {
+        background-position: 0 0;
+    }
+
+    to {
+        background-position: 200px 100px;
+    }
 }
 
 .app-container {
@@ -120,8 +125,15 @@ body::before {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .section-title {
@@ -157,8 +169,10 @@ body::before {
 /* ========== TRADE POINTS GRID ========== */
 .trade-points-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 12px;
+    max-height: 60vh;
+    overflow-y: auto;
 }
 
 .trade-point-btn {
@@ -166,12 +180,16 @@ body::before {
     backdrop-filter: blur(20px);
     border: 1px solid var(--glass-border);
     border-radius: var(--border-radius-sm);
-    padding: 16px 8px;
+    padding: 12px;
     color: var(--text-primary);
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
 }
 
 .trade-point-btn:hover {
@@ -183,6 +201,23 @@ body::before {
     border-color: var(--neon-primary);
     background: rgba(0, 217, 255, 0.1);
     box-shadow: var(--neon-glow);
+}
+
+.tp-code {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--neon-primary);
+    margin-bottom: 4px;
+}
+
+.tp-address {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 /* ========== TARIFF CARDS ========== */
@@ -322,12 +357,12 @@ body::before {
     transition: 0.3s;
 }
 
-.toggle-switch input:checked + .toggle-slider {
+.toggle-switch input:checked+.toggle-slider {
     border-color: var(--neon-primary);
     box-shadow: var(--neon-glow);
 }
 
-.toggle-switch input:checked + .toggle-slider::before {
+.toggle-switch input:checked+.toggle-slider::before {
     background: var(--neon-primary);
     transform: translateX(24px);
     box-shadow: 0 0 10px var(--neon-primary);
@@ -366,8 +401,8 @@ body::before {
     box-shadow: 0 0 15px rgba(0, 217, 255, 0.3);
 }
 
-.neon-input:focus + .floating-label,
-.neon-input:not(:placeholder-shown) + .floating-label {
+.neon-input:focus+.floating-label,
+.neon-input:not(:placeholder-shown)+.floating-label {
     top: -8px;
     left: 12px;
     font-size: 12px;
