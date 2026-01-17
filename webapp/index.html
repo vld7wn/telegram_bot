@@ -23,12 +23,6 @@
         <!-- Screen 1: Trade Point Selection -->
         <section class="screen active" id="screen1">
             <h2 class="section-title">Выберите торговую точку</h2>
-
-            <!-- Search Input -->
-            <div class="search-container">
-                <input type="text" id="searchInput" class="search-input" placeholder="🔍 Поиск по адресу или коду...">
-            </div>
-
             <div class="trade-points-grid" id="tradePointsGrid">
                 <!-- Заполняется динамически -->
             </div>
@@ -93,17 +87,11 @@
                 <div class="autocomplete-suggestions" id="addressSuggestions"></div>
             </div>
 
-            <div class="form-row">
-                <div class="form-group half">
-                    <input type="text" id="userApartment" class="neon-input" placeholder=" ">
-                    <label class="floating-label">Квартира</label>
-                </div>
-            </div>
-
             <!-- Скрытые поля для структурированного адреса -->
             <input type="hidden" id="userCity">
             <input type="hidden" id="userStreet">
             <input type="hidden" id="userHouse">
+            <input type="hidden" id="userApartment">
         </section>
 
         <!-- Screen 5: Confirmation -->
