@@ -412,8 +412,13 @@ function updateSummaryScreen() {
 
     // ТВ-приставка
     let tvBoxPrice = 0;
+    const tvBoxRow = document.getElementById('summaryTvBoxRentalRow');
     if (state.needsTvBox && state.tariff?.tvBoxRental) {
         tvBoxPrice = parseInt(state.tariff.tvBoxRental) || 0;
+        tvBoxRow.style.display = 'flex';
+        document.getElementById('summaryTvBoxRental').textContent = `${tvBoxPrice} ₽/мес`;
+    } else {
+        tvBoxRow.style.display = 'none';
     }
 
     // Первый месяц = подключение + тариф + роутер + ТВ-приставка (если есть)
