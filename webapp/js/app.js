@@ -10,6 +10,111 @@ const CONFIG = {
     tariffs: []
 };
 
+// ========== DADATA AUTOCOMPLETE ==========
+const DADATA_TOKEN = '548bdfced9b8d41ee5e5e5b09fb1c18f8eadfd61';
+const DADATA_URL = 'https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address';
+
+let debounceTimer = null;
+let currentSuggestions = [];
+
+async function fetchAddressSuggestions(query) {
+    if (!query || query.length < 3) {
+        hideSuggestions();
+        return;
+    }
+
+    try {
+        const response = await fetch(DADATA_URL, {
+            method: 'POST',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': 'Token ' + DADATA_TOKEN
+            },
+            body: JSON.stringify({
+                query: query,
+                count: 7,
+                locations: [{ country: 'Россия' }]
+            })
+        });
+
+        const data = await response.json();
+        currentSuggestions = data.suggestions || [];
+        renderSuggestions();
+    } catch (error) {
+        console.error('DaData error:', error);
+        currentSuggestions = [];
+    }
+}
+
+function renderSuggestions() {
+    const container = document.getElementById('addressSuggestions');
+    if (!container || currentSuggestions.length === 0) {
+        hideSuggestions();
+        return;
+    }
+
+    container.innerHTML = currentSuggestions.map((s, index) => `
+        <div class="suggestion-item" onclick="selectSuggestion(${index})">
+            <span class="suggestion-main">${s.value}</span>
+        </div>
+    `).join('');
+
+    container.classList.add('active');
+}
+
+function hideSuggestions() {
+    const container = document.getElementById('addressSuggestions');
+    if (container) {
+        container.classList.remove('active');
+        container.innerHTML = '';
+    }
+    currentSuggestions = [];
+}
+
+function selectSuggestion(index) {
+    const suggestion = currentSuggestions[index];
+    if (!suggestion) return;
+
+    const addr = suggestion.data;
+
+    // Заполняем видимое поле
+    document.getElementById('userAddress').value = suggestion.value;
+
+    // Заполняем скрытые поля структурированными данными
+    document.getElementById('userCity').value = addr.city || addr.settlement || addr.region || '';
+    document.getElementById('userStreet').value = addr.street || '';
+    document.getElementById('userHouse').value = [addr.house, addr.block].filter(Boolean).join(' корп. ') || '';
+
+    hideSuggestions();
+}
+
+function setupAddressAutocomplete() {
+    const input = document.getElementById('userAddress');
+    if (!input) return;
+
+    input.addEventListener('input', (e) => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            fetchAddressSuggestions(e.target.value);
+        }, 300);
+    });
+
+    input.addEventListener('focus', () => {
+        if (currentSuggestions.length > 0) {
+            renderSuggestions();
+        }
+    });
+
+    // Скрываем подсказки при клике вне
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.autocomplete-container')) {
+            hideSuggestions();
+        }
+    });
+}
+
 // ========== ЗАГРУЗКА ДАННЫХ ==========
 async function loadTradePoints() {
     try {
@@ -328,8 +433,8 @@ function validateCurrentScreen() {
 
 function validateUserData() {
     const { name, phone, email, city, street, house } = state.userData;
-    return name.trim() && phone.trim() && email.trim() &&
-        city.trim() && street.trim() && house.trim();
+    // Проверяем что адрес заполнен (хотя бы город)
+    return name.trim() && phone.trim() && email.trim() && city.trim();
 }
 
 function collectUserData() {
@@ -340,7 +445,8 @@ function collectUserData() {
         city: document.getElementById('userCity').value.trim(),
         street: document.getElementById('userStreet').value.trim(),
         house: document.getElementById('userHouse').value.trim(),
-        apartment: document.getElementById('userApartment').value.trim()
+        apartment: document.getElementById('userApartment').value.trim(),
+        fullAddress: document.getElementById('userAddress').value.trim()
     };
 }
 
@@ -409,6 +515,7 @@ async function init() {
     renderTariffs();
     setupEventListeners();
     setupSearchListener();
+    setupAddressAutocomplete();
     updateUI();
 }
 

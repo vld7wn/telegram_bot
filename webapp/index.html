@@ -85,26 +85,25 @@
                 <label class="floating-label">Email</label>
             </div>
 
-            <div class="form-group">
-                <input type="text" id="userCity" class="neon-input" placeholder=" " required>
-                <label class="floating-label">Город</label>
-            </div>
-
-            <div class="form-group">
-                <input type="text" id="userStreet" class="neon-input" placeholder=" " required>
-                <label class="floating-label">Улица</label>
+            <!-- Единое поле адреса с автокомплитом -->
+            <div class="form-group autocomplete-container">
+                <input type="text" id="userAddress" class="neon-input autocomplete-input" placeholder=" "
+                    autocomplete="off" required>
+                <label class="floating-label">Адрес (начните вводить)</label>
+                <div class="autocomplete-suggestions" id="addressSuggestions"></div>
             </div>
 
             <div class="form-row">
-                <div class="form-group half">
-                    <input type="text" id="userHouse" class="neon-input" placeholder=" " required>
-                    <label class="floating-label">Дом</label>
-                </div>
                 <div class="form-group half">
                     <input type="text" id="userApartment" class="neon-input" placeholder=" ">
                     <label class="floating-label">Квартира</label>
                 </div>
             </div>
+
+            <!-- Скрытые поля для структурированного адреса -->
+            <input type="hidden" id="userCity">
+            <input type="hidden" id="userStreet">
+            <input type="hidden" id="userHouse">
         </section>
 
         <!-- Screen 5: Confirmation -->
