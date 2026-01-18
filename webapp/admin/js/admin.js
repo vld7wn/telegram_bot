@@ -90,17 +90,26 @@ function updateTime() {
 // ========== DATA LOADING ==========
 async function loadAllData() {
     try {
-        await Promise.all([
+        // Try to load from API first
+        const results = await Promise.allSettled([
             loadApplications(),
             loadAdmins(),
             loadTradePoints(),
             loadTariffs(),
-            loadBotStatus()
+            loadBotStatus(),
+            loadStats()
         ]);
-        updateDashboard();
+
+        // Check if all critical requests succeeded
+        const allSucceeded = results.every(r => r.status === 'fulfilled');
+        if (!allSucceeded) {
+            console.warn('Some API requests failed, using partial data');
+        }
+
+        renderAll();
     } catch (error) {
         console.error('Error loading data:', error);
-        // Load from local JSON files as fallback for demo
+        // Load fallback demo data if API is not available
         await loadDemoData();
     }
 }
@@ -173,6 +182,21 @@ async function loadBotStatus() {
     updateBotStatusUI();
 }
 
+async function loadStats() {
+    try {
+        const response = await fetch(`${API_BASE}/stats`);
+        if (response.ok) {
+            const stats = await response.json();
+            document.getElementById('statTotal').textContent = stats.totalApplications || 0;
+            document.getElementById('statNew').textContent = stats.newToday || 0;
+            document.getElementById('statInProgress').textContent = stats.inProgress || 0;
+            document.getElementById('statCompleted').textContent = stats.completed || 0;
+        }
+    } catch (e) {
+        console.warn('Could not load stats from API');
+    }
+}
+
 function refreshData() {
     loadAllData();
 }
@@ -190,16 +214,20 @@ function renderAll() {
 }
 
 function updateDashboard() {
+    // Calculate stats from local applications array (fallback if API stats not loaded)
     const total = applications.length;
-    const today = new Date().toISOString().split('T')[0];
-    const newToday = applications.filter(a => a.date.startsWith(today.replace(/-/g, '-')) && a.status === 'Новая').length;
-    const inProgress = applications.filter(a => a.status === 'В работе').length;
-    const completed = applications.filter(a => a.status === 'Выполнена').length;
+    const newCount = applications.filter(a => (a.status || '').includes('Новая')).length;
+    const inProgress = applications.filter(a => (a.status || '').includes('В работе')).length;
+    const completed = applications.filter(a => (a.status || '').includes('Выполнена')).length;
 
-    document.getElementById('statTotal').textContent = total;
-    document.getElementById('statNew').textContent = applications.filter(a => a.status === 'Новая').length;
-    document.getElementById('statInProgress').textContent = inProgress;
-    document.getElementById('statCompleted').textContent = completed;
+    // Only update if values are currently 0 (not already set by loadStats)
+    const statTotal = document.getElementById('statTotal');
+    if (statTotal.textContent === '0' || statTotal.textContent === '156') {
+        statTotal.textContent = total;
+        document.getElementById('statNew').textContent = newCount;
+        document.getElementById('statInProgress').textContent = inProgress;
+        document.getElementById('statCompleted').textContent = completed;
+    }
 
     renderRecentApplications();
     renderChart();
