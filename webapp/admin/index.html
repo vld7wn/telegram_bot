@@ -13,16 +13,9 @@
     <div class="app-container">
         <!-- Sidebar -->
         <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="logo">
-                    <span class="logo-icon">🤖</span>
-                    <span class="logo-text">Telegram Bot</span>
-                </div>
-            </div>
-
             <nav class="sidebar-nav">
                 <a href="#" class="nav-item active" data-page="dashboard">
-                    <span class="nav-icon">📊</span>
+                    <span class="nav-icon">🏠</span>
                     <span class="nav-text">Главная</span>
                 </a>
                 <a href="#" class="nav-item" data-page="applications">
@@ -46,88 +39,90 @@
                     <span class="nav-text">Настройки</span>
                 </a>
             </nav>
-
-            <div class="sidebar-footer">
-                <div class="bot-status" id="botStatus">
-                    <span class="status-dot active"></span>
-                    <span class="status-text">Бот активен</span>
-                </div>
-            </div>
         </aside>
 
         <!-- Main Content -->
         <main class="main-content">
-            <header class="top-bar">
-                <h1 class="page-title" id="pageTitle">Главная</h1>
-                <div class="top-bar-right">
-                    <span class="current-time" id="currentTime"></span>
+            <!-- Header -->
+            <header class="top-header">
+                <h1 class="main-title">Telegram Бот: Управление</h1>
+                <div class="header-time">
+                    <span class="time" id="currentTime">14:35</span>
+                    <span class="date" id="currentDate">29 Марта 2024</span>
                 </div>
             </header>
 
             <!-- Dashboard Page -->
             <section class="page active" id="page-dashboard">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon">📝</div>
-                        <div class="stat-info">
-                            <span class="stat-value" id="statTotal">0</span>
+                <!-- Stats Row -->
+                <div class="stats-container glass-panel">
+                    <div class="stat-item">
+                        <div class="stat-icon-wrap purple">📝</div>
+                        <div class="stat-content">
+                            <span class="stat-number" id="statTotal">156</span>
                             <span class="stat-label">Всего заявок</span>
                         </div>
                     </div>
-                    <div class="stat-card highlight">
-                        <div class="stat-icon">🆕</div>
-                        <div class="stat-info">
-                            <span class="stat-value" id="statNew">0</span>
+                    <div class="stat-item">
+                        <div class="stat-icon-wrap cyan">🆕</div>
+                        <div class="stat-content">
+                            <span class="stat-number" id="statNew">12</span>
                             <span class="stat-label">Новые сегодня</span>
                         </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">⏳</div>
-                        <div class="stat-info">
-                            <span class="stat-value" id="statInProgress">0</span>
+                    <div class="stat-item">
+                        <div class="stat-icon-wrap orange">⏳</div>
+                        <div class="stat-content">
+                            <span class="stat-number" id="statInProgress">8</span>
                             <span class="stat-label">В работе</span>
                         </div>
                     </div>
-                    <div class="stat-card success">
-                        <div class="stat-icon">✅</div>
-                        <div class="stat-info">
-                            <span class="stat-value" id="statCompleted">0</span>
+                    <div class="stat-item">
+                        <div class="stat-icon-wrap green">✅</div>
+                        <div class="stat-content">
+                            <span class="stat-number" id="statCompleted">136</span>
                             <span class="stat-label">Завершено</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="dashboard-grid">
-                    <div class="card chart-card">
-                        <h3 class="card-title">Динамика заявок за месяц</h3>
-                        <canvas id="applicationsChart"></canvas>
+                <!-- Main Grid -->
+                <div class="dashboard-main-grid">
+                    <!-- Chart -->
+                    <div class="glass-panel chart-panel">
+                        <h3 class="panel-title">Динамика заявок за месяц</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="applicationsChart"></canvas>
+                        </div>
                     </div>
 
-                    <div class="card actions-card">
-                        <h3 class="card-title">Быстрые действия</h3>
-                        <div class="quick-actions">
-                            <button class="action-btn" onclick="showPage('applications')">
-                                <span class="action-icon">📋</span>
-                                <span>Просмотр заявок</span>
+                    <!-- Quick Actions -->
+                    <div class="glass-panel actions-panel">
+                        <h3 class="panel-title">Быстрые действия</h3>
+                        <div class="quick-actions-grid">
+                            <button class="quick-action-btn" onclick="showPage('applications')">
+                                <span class="qa-icon">📋</span>
+                                <span class="qa-text">Просмотр заявок</span>
                             </button>
-                            <button class="action-btn" onclick="showPage('admins')">
-                                <span class="action-icon">👥</span>
-                                <span>Добавить админа</span>
+                            <button class="quick-action-btn" onclick="showPage('admins')">
+                                <span class="qa-icon">👤</span>
+                                <span class="qa-text">Добавить админа</span>
                             </button>
-                            <button class="action-btn" onclick="refreshData()">
-                                <span class="action-icon">🔄</span>
-                                <span>Обновить данные</span>
+                            <button class="quick-action-btn" onclick="refreshData()">
+                                <span class="qa-icon">🔄</span>
+                                <span class="qa-text">Обновить данные</span>
                             </button>
-                            <button class="action-btn" id="toggleBotBtn" onclick="toggleBot()">
-                                <span class="action-icon">🔴</span>
-                                <span>Выключить бота</span>
+                            <button class="quick-action-btn" id="toggleBotBtn" onclick="toggleBot()">
+                                <span class="qa-icon">📊</span>
+                                <span class="qa-text">Обнов. тарифы</span>
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <div class="card recent-applications">
-                    <h3 class="card-title">Последние заявки</h3>
+                <!-- Recent Applications -->
+                <div class="glass-panel">
+                    <h3 class="panel-title">Последние заявки</h3>
                     <div class="table-container">
                         <table class="data-table">
                             <thead>
@@ -141,7 +136,6 @@
                                 </tr>
                             </thead>
                             <tbody id="recentApplicationsBody">
-                                <!-- Заполняется через JS -->
                             </tbody>
                         </table>
                     </div>
@@ -152,8 +146,7 @@
             <section class="page" id="page-applications">
                 <div class="page-header">
                     <div class="search-filter">
-                        <input type="text" class="search-input" id="searchApplications"
-                            placeholder="🔍 Поиск по имени, телефону, адресу...">
+                        <input type="text" class="search-input" id="searchApplications" placeholder="🔍 Поиск...">
                         <select class="filter-select" id="filterStatus">
                             <option value="">Все статусы</option>
                             <option value="Новая">Новая</option>
@@ -161,18 +154,13 @@
                             <option value="Выполнена">Выполнена</option>
                             <option value="Отменена">Отменена</option>
                         </select>
-                        <select class="filter-select" id="filterTradePoint">
-                            <option value="">Все точки</option>
-                        </select>
                     </div>
-                    <button class="btn btn-primary" onclick="exportToExcel()">
-                        📥 Экспорт в Excel
-                    </button>
+                    <button class="btn btn-primary" onclick="exportToExcel()">📥 Экспорт</button>
                 </div>
 
-                <div class="card">
+                <div class="glass-panel">
                     <div class="table-container">
-                        <table class="data-table" id="applicationsTable">
+                        <table class="data-table">
                             <thead>
                                 <tr>
                                     <th>ID</th>
@@ -185,13 +173,8 @@
                                     <th>Действия</th>
                                 </tr>
                             </thead>
-                            <tbody id="applicationsBody">
-                                <!-- Заполняется через JS -->
-                            </tbody>
+                            <tbody id="applicationsBody"></tbody>
                         </table>
-                    </div>
-                    <div class="pagination" id="applicationsPagination">
-                        <!-- Пагинация -->
                     </div>
                 </div>
             </section>
@@ -199,57 +182,44 @@
             <!-- Admins Page -->
             <section class="page" id="page-admins">
                 <div class="admins-grid">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Администраторы</h3>
-                            <button class="btn btn-primary" onclick="showAddAdminModal()">
-                                ➕ Добавить
-                            </button>
+                    <div class="glass-panel">
+                        <div class="panel-header">
+                            <h3 class="panel-title">Администраторы</h3>
+                            <button class="btn btn-primary btn-sm" onclick="showAddAdminModal()">➕ Добавить</button>
                         </div>
-                        <div class="admins-list" id="adminsList">
-                            <!-- Заполняется через JS -->
-                        </div>
+                        <div class="admins-list" id="adminsList"></div>
                     </div>
-
-                    <div class="card">
-                        <h3 class="card-title">Запросы на одобрение</h3>
-                        <div class="pending-requests" id="pendingRequests">
-                            <!-- Заполняется через JS -->
-                        </div>
+                    <div class="glass-panel">
+                        <h3 class="panel-title">Запросы на одобрение</h3>
+                        <div class="pending-requests" id="pendingRequests"></div>
                     </div>
                 </div>
             </section>
 
             <!-- Trade Points Page -->
             <section class="page" id="page-trade-points">
-                <div class="page-header">
-                    <h3>Управление торговыми точками</h3>
-                    <button class="btn btn-primary" onclick="showAddTradePointModal()">
-                        ➕ Добавить точку
-                    </button>
-                </div>
-                <div class="card">
-                    <div class="trade-points-list" id="tradePointsList">
-                        <!-- Заполняется через JS -->
+                <div class="glass-panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">Торговые точки</h3>
+                        <button class="btn btn-primary btn-sm">➕ Добавить</button>
                     </div>
+                    <div class="trade-points-list" id="tradePointsList"></div>
                 </div>
             </section>
 
             <!-- Tariffs Page -->
             <section class="page" id="page-tariffs">
-                <div class="card">
-                    <h3 class="card-title">Тарифные планы</h3>
-                    <div class="tariffs-list" id="tariffsList">
-                        <!-- Заполняется через JS -->
-                    </div>
+                <div class="glass-panel">
+                    <h3 class="panel-title">Тарифные планы</h3>
+                    <div class="tariffs-list" id="tariffsList"></div>
                 </div>
             </section>
 
             <!-- Settings Page -->
             <section class="page" id="page-settings">
                 <div class="settings-grid">
-                    <div class="card">
-                        <h3 class="card-title">Статус бота</h3>
+                    <div class="glass-panel">
+                        <h3 class="panel-title">Статус бота</h3>
                         <div class="setting-row">
                             <span>Бот активен</span>
                             <label class="toggle-switch">
@@ -258,23 +228,19 @@
                             </label>
                         </div>
                     </div>
-
-                    <div class="card">
-                        <h3 class="card-title">Рассылка</h3>
-                        <textarea class="broadcast-input" id="broadcastMessage"
-                            placeholder="Введите сообщение для рассылки..."></textarea>
-                        <button class="btn btn-primary" onclick="sendBroadcast()">
-                            📢 Отправить всем
-                        </button>
+                    <div class="glass-panel">
+                        <h3 class="panel-title">Рассылка</h3>
+                        <textarea class="broadcast-input" id="broadcastMessage" placeholder="Сообщение..."></textarea>
+                        <button class="btn btn-primary" onclick="sendBroadcast()">📢 Отправить</button>
                     </div>
                 </div>
             </section>
         </main>
     </div>
 
-    <!-- Modal for adding admin -->
+    <!-- Add Admin Modal -->
     <div class="modal" id="addAdminModal">
-        <div class="modal-content">
+        <div class="modal-content glass-panel">
             <div class="modal-header">
                 <h3>Добавить администратора</h3>
                 <button class="modal-close" onclick="closeModal('addAdminModal')">&times;</button>
@@ -286,13 +252,11 @@
                 </div>
                 <div class="form-group">
                     <label>Имя</label>
-                    <input type="text" id="newAdminName" class="form-input" placeholder="Имя администратора">
+                    <input type="text" id="newAdminName" class="form-input" placeholder="Имя">
                 </div>
                 <div class="form-group">
                     <label>Торговая точка</label>
-                    <select id="newAdminTradePoint" class="form-input">
-                        <!-- Заполняется через JS -->
-                    </select>
+                    <select id="newAdminTradePoint" class="form-input"></select>
                 </div>
             </div>
             <div class="modal-footer">
@@ -302,19 +266,17 @@
         </div>
     </div>
 
-    <!-- Modal for application details -->
+    <!-- Application Modal -->
     <div class="modal" id="applicationModal">
-        <div class="modal-content modal-large">
+        <div class="modal-content glass-panel modal-large">
             <div class="modal-header">
-                <h3>Детали заявки #<span id="modalAppId"></span></h3>
+                <h3>Заявка #<span id="modalAppId"></span></h3>
                 <button class="modal-close" onclick="closeModal('applicationModal')">&times;</button>
             </div>
-            <div class="modal-body" id="applicationDetails">
-                <!-- Заполняется через JS -->
-            </div>
+            <div class="modal-body" id="applicationDetails"></div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('applicationModal')">Закрыть</button>
-                <button class="btn btn-primary" onclick="sendMessageToClient()">💬 Написать клиенту</button>
+                <button class="btn btn-primary">💬 Написать</button>
             </div>
         </div>
     </div>
