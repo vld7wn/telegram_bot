@@ -33,33 +33,17 @@ private:
 void sendSuperAdminPanel(TgBot::Bot& bot, int64_t chat_id) {
     admin_work_mode[chat_id] = AdminWorkMode::ADMIN_VIEW;
     db_save_admin_work_mode(chat_id, AdminWorkMode::ADMIN_VIEW);
+    
     auto keyboard = std::make_shared<TgBot::ReplyKeyboardMarkup>();
     keyboard->resizeKeyboard = true;
 
     std::vector<TgBot::KeyboardButton::Ptr> row1;
-    auto approve_btn = std::make_shared<TgBot::KeyboardButton>();
-    approve_btn->text = "👀 Одобрение заявок админов";
-    row1.push_back(approve_btn);
+    auto admin_panel_btn = std::make_shared<TgBot::KeyboardButton>();
+    admin_panel_btn->text = "🖥️ Админ. панель";
+    admin_panel_btn->webApp = std::make_shared<TgBot::WebAppInfo>();
+    admin_panel_btn->webApp->url = "https://vld7wn.github.io/telegram_bot/webapp/admin/";
+    row1.push_back(admin_panel_btn);
     keyboard->keyboard.push_back(row1);
-
-    std::vector<TgBot::KeyboardButton::Ptr> row_view_apps;
-    auto view_apps_btn = std::make_shared<TgBot::KeyboardButton>();
-    view_apps_btn->text = "📊 Посмотреть заявки";
-    row_view_apps.push_back(view_apps_btn);
-    keyboard->keyboard.push_back(row_view_apps);
-
-    std::vector<TgBot::KeyboardButton::Ptr> row3;
-    auto manage_admins_btn = std::make_shared<TgBot::KeyboardButton>();
-    manage_admins_btn->text = "🕹️ Управление админами";
-    row3.push_back(manage_admins_btn);
-    keyboard->keyboard.push_back(row3);
-
-    bool is_active = db_get_bot_status();
-    std::vector<TgBot::KeyboardButton::Ptr> row4;
-    auto toggle_status_btn = std::make_shared<TgBot::KeyboardButton>();
-    toggle_status_btn->text = is_active ? "🔴 Деактивировать бота" : "🟢 Активировать бота";
-    row4.push_back(toggle_status_btn);
-    keyboard->keyboard.push_back(row4);
 
     bot.getApi().sendMessage(chat_id, "👑 Добро пожаловать, Главный Администратор!", false, 0, keyboard);
     LOG(LogLevel::INFO, "Sent super admin panel to chat ID: " << chat_id);
