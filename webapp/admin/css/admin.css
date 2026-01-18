@@ -294,6 +294,12 @@ body::before {
 
 .chart-card {
     min-height: 300px;
+    max-height: 350px;
+    position: relative;
+}
+
+.chart-card canvas {
+    max-height: 280px !important;
 }
 
 .quick-actions {
