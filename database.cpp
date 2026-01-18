@@ -333,6 +333,45 @@ std::vector<ApplicationDataForReport> db_get_all_applications()
     return results;
 }
 
+// Получение заявки по ID
+std::optional<ApplicationDataForReport> db_get_application_by_id(int64_t app_id)
+{
+    std::string sql = "SELECT ID, USER_ID, TARIFF, NAME, PRICE, PHONE, EMAIL, ADDRESS, strftime('%Y-%m-%d %H:%M', TIMESTAMP), STATUS FROM applications WHERE ID = ?;";
+    sqlite3_stmt *stmt;
+    std::optional<ApplicationDataForReport> result = std::nullopt;
+
+    if (sqlite3_prepare_v2(db_main, sql.c_str(), -1, &stmt, 0) == SQLITE_OK)
+    {
+        sqlite3_bind_int64(stmt, 1, app_id);
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            ApplicationDataForReport app_data;
+            app_data.id = sqlite3_column_int64(stmt, 0);
+            app_data.user_id = sqlite3_column_int64(stmt, 1);
+            const char *tariff = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 2));
+            app_data.tariff = tariff ? tariff : "";
+            const char *name = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 3));
+            app_data.name = name ? name : "";
+            const char *price = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 4));
+            app_data.price = price ? price : "";
+            const char *phone = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 5));
+            app_data.phone = phone ? phone : "";
+            const char *email = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 6));
+            app_data.email = email ? email : "";
+            const char *address = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 7));
+            app_data.address = address ? address : "";
+            const char *timestamp = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 8));
+            app_data.timestamp = timestamp ? timestamp : "";
+            const char *status = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 9));
+            app_data.chat_status = status ? status : "";
+
+            result = app_data;
+        }
+    }
+    sqlite3_finalize(stmt);
+    return result;
+}
+
 // Обновление статуса заявки.
 void db_update_application_status(long long application_id, ApplicationStatus status)
 {

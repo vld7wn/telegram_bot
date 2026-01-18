@@ -45,6 +45,8 @@ std::string db_get_my_apps(int64_t user_id);
 std::string db_get_apps_by_trade_point(const std::string &trade_point_code);
 std::vector<ApplicationDataForReport> db_get_apps_data_for_report(const std::string &trade_point_code);
 std::vector<ApplicationDataForReport> db_get_all_applications();
+#include <optional>
+std::optional<ApplicationDataForReport> db_get_application_by_id(int64_t app_id);
 void db_update_application_status(long long application_id, ApplicationStatus status);
 
 // Функции для управления администраторами

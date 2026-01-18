@@ -69,7 +69,7 @@ void HttpServer::start(int port)
 {
     if (running_)
     {
-        LOG(LogLevel::WARNING, "HTTP server is already running");
+        LOG(LogLevel::L_WARNING, "HTTP server is already running");
         return;
     }
 
@@ -171,9 +171,30 @@ void HttpServer::setupRoutes()
                    try
                    {
                        int64_t app_id = std::stoll(req.matches[1]);
-                       // TODO: Implement db_get_application_by_id(app_id)
-                       json response = {{"id", app_id}, {"error", "Not implemented yet"}};
-                       res.set_content(response.dump(), "application/json");
+                       auto app_opt = db_get_application_by_id(app_id);
+
+                       if (app_opt)
+                       {
+                           const auto &app = *app_opt;
+                           json response = {
+                               {"id", app.id},
+                               {"userId", app.user_id},
+                               {"name", app.name},
+                               {"phone", app.phone},
+                               {"email", app.email},
+                               {"tariff", app.tariff},
+                               {"address", app.address},
+                               {"status", app.chat_status},
+                               {"date", app.timestamp},
+                               {"price", app.price}};
+                           res.set_content(response.dump(), "application/json");
+                       }
+                       else
+                       {
+                           res.status = 404;
+                           json response = {{"error", "Application not found"}};
+                           res.set_content(response.dump(), "application/json");
+                       }
                    }
                    catch (const std::exception &e)
                    {
@@ -197,7 +218,7 @@ void HttpServer::setupRoutes()
                          else if (status == "В работе")
                              app_status = ApplicationStatus::InProgress;
                          else if (status == "Выполнена")
-                             app_status = ApplicationStatus::Completed;
+                             app_status = ApplicationStatus::Done;
                          else if (status == "Отменена")
                              app_status = ApplicationStatus::Cancelled;
                          else
@@ -330,12 +351,12 @@ void HttpServer::setupRoutes()
     // ========== TRADE POINTS ==========
     g_svr->Get("/api/trade-points", [](const httplib::Request &, httplib::Response &res)
                {
-                   auto &points = trade_points;
+                   auto points = get_all_trade_points();
                    json result = json::array();
 
-                   for (const auto &[code, point] : points)
+                   for (const auto &point : points)
                    {
-                       result.push_back({{"code", code},
+                       result.push_back({{"code", point.code},
                                          {"name", point.name},
                                          {"address", point.address}});
                    }
@@ -346,27 +367,24 @@ void HttpServer::setupRoutes()
     // ========== TARIFFS ==========
     g_svr->Get("/api/tariffs", [](const httplib::Request &, httplib::Response &res)
                {
-                   auto &tariffs = tariff_manager.getTariffs();
+                   // Используем глобальный вектор tariff_plans из tariff_manager.h
+                   auto &tariffs = tariff_plans;
                    json result = json::array();
 
-                   for (const auto &[name, tariff] : tariffs)
+                   for (const auto &tariff : tariffs)
                    {
                        json speeds = json::array();
-                       for (const auto &[speed, price] : tariff.speed_options)
+                       for (const auto &speed_opt : tariff.speeds)
                        {
-                           speeds.push_back({{"speed", speed}, {"price", price}});
+                           speeds.push_back({{"speed", speed_opt.value + " " + speed_opt.unit},
+                                             {"price", speed_opt.price}});
                        }
 
+                       // Addons не поддерживаются в текущей структуре TariffPlan
                        json addons = json::array();
-                       for (const auto &[addon_name, addon] : tariff.addons)
-                       {
-                           addons.push_back({{"name", addon_name},
-                                             {"displayName", addon.display_name},
-                                             {"price", addon.price}});
-                       }
 
-                       result.push_back({{"id", name},
-                                         {"name", tariff.display_name},
+                       result.push_back({{"id", tariff.id},
+                                         {"name", tariff.name},
                                          {"speeds", speeds},
                                          {"addons", addons},
                                          {"connectionFee", tariff.connection_fee},

@@ -4,9 +4,17 @@ cmake_policy(SET CMP0167 OLD)
 # Название проекта
 project(my_telegram_bot CXX)
 
+if(MSVC)
+    add_compile_options(/FS)
+endif()
+
 # Устанавливаем стандарт C++
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Устанавливаем версию Windows 10 для поддержки cpp-httplib
+add_compile_definitions(_WIN32_WINNT=0x0A00)
+add_compile_definitions(WINVER=0x0A00)
 
 # --- ПОИСК ЗАВИСИМОСТЕЙ (VCPKG) ---
 # Toolchain передаётся через -DCMAKE_TOOLCHAIN_FILE или автоматически через VCPKG_ROOT
@@ -18,6 +26,21 @@ find_package(Boost REQUIRED system)
 find_package(xlnt REQUIRED)
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
 find_package(nlohmann_json REQUIRED)
+
+# find_package(TgBot) не сработал, ищем библиотеку вручную
+find_library(TGBOT_LIB NAMES tgbot TgBot tgbot-cpp PATHS 
+    "$ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib"
+    "D:/vcpkg/installed/x64-windows/lib"
+)
+
+if(NOT TGBOT_LIB)
+    message(FATAL_ERROR "TgBot library not found!")
+else()
+    message(STATUS "Found TgBot library: ${TGBOT_LIB}")
+endif()
+
+find_package(OpenSSL REQUIRED)
+find_package(CURL REQUIRED)
 
 # --- ОПРЕДЕЛЕНИЕ БИБЛИОТЕКИ ЛОГИКИ ---
 add_library(bot_logic
@@ -42,30 +65,20 @@ add_library(bot_logic
 # --- ДОБАВЛЕНИЕ ПАПОК С ЗАГОЛОВОЧНЫМИ ФАЙЛАМИ К БИБЛИОТЕКЕ ---
 target_include_directories(bot_logic PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-# Определяем triplet если не задан
-if(NOT DEFINED VCPKG_TARGET_TRIPLET)
-    set(VCPKG_TARGET_TRIPLET "x64-mingw-static")
-endif()
-
-# Добавляем путь к заголовочным файлам vcpkg (для tgbot-cpp и других библиотек)
+# Добавляем пути к заголовкам VCPKG если переменная окружения задана
 if(DEFINED ENV{VCPKG_ROOT})
     target_include_directories(bot_logic PUBLIC "$ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/include")
     link_directories("$ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib")
 else()
-    # Fallback для систем без VCPKG_ROOT
-    target_include_directories(bot_logic PUBLIC "D:/vcpkg/installed/x64-mingw-static/include")
-    link_directories("D:/vcpkg/installed/x64-mingw-static/lib")
+    target_include_directories(bot_logic PUBLIC "D:/vcpkg/installed/x64-windows/include")
+    link_directories("D:/vcpkg/installed/x64-windows/lib")
 endif()
 
 # --- ПОДКЛЮЧЕНИЕ БИБЛИОТЕК (ЛИНКОВКА) К БИБЛИОТЕКЕ ---
 
-# Находим OpenSSL
-find_package(OpenSSL REQUIRED)
-find_package(CURL REQUIRED)
-
 target_link_libraries(bot_logic PRIVATE
-		# Линкуемся с tgbot-cpp напрямую по имени.
-		TgBot
+		# Линкуемся с найденной библиотекой TgBot
+		${TGBOT_LIB}
 
 		# Остальные библиотеки, найденные через find_package
 		xlnt::xlnt
@@ -73,7 +86,7 @@ target_link_libraries(bot_logic PRIVATE
 		nlohmann_json::nlohmann_json
 		Boost::system
 		
-		# OpenSSL и CURL для TgBot
+		# OpenSSL и CURL (уже включены в TgBot::TgBot, но можно оставить явно)
 		OpenSSL::SSL
 		OpenSSL::Crypto
 		CURL::libcurl

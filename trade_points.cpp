@@ -50,13 +50,14 @@ std::vector<std::string> get_all_trade_point_codes()
     return codes;
 }
 
-/*
-// Пример, если бы вам нужна была функция, возвращающая map код -> адрес
-std::map<std::string, std::string> get_all_trade_point_codes_with_addresses() {
-    std::map<std::string, std::string> points_map;
-    for (const auto& point : trade_points_data) {
-        points_map[point.at("code").get<std::string>()] = point.at("address").get<std::string>();
+std::vector<TradePoint> get_all_trade_points()
+{
+    std::vector<TradePoint> points;
+    for (const auto &point : trade_points_data)
+    {
+        points.push_back({point.at("code").get<std::string>(),
+                          point.value("name", ""), // Используем value для безопасности
+                          point.at("address").get<std::string>()});
     }
-    return points_map;
+    return points;
 }
-*/
