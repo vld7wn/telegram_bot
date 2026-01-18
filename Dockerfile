@@ -9,6 +9,12 @@ RUN apt-get update && apt-get install -y \
     libsqlite3-dev \
     libboost-system-dev \
     git \
+    curl \
+    zip \
+    unzip \
+    tar \
+    pkg-config \
+    ninja-build \
     && rm -rf /var/lib/apt/lists/*
 
 # Install vcpkg and dependencies
