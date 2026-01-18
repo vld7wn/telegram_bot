@@ -21,6 +21,7 @@
 #include "user_data_types.h"
 #include "application_status.h"
 #include "message_to_client.h"
+#include "http_server.h"
 
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
@@ -126,6 +127,12 @@ int main()
 
     TgBot::Bot bot(std::string(config.bot_token));
 
+    // Initialize and start HTTP API server
+    initHttpServer(bot);
+    HttpServer *httpServer = getHttpServer();
+    httpServer->start(8080);
+    LOG(LogLevel::INFO, "HTTP API server started on port 8080");
+
     bot.getEvents().onCommand("start", [&bot](TgBot::Message::Ptr message)
                               {
                                   int64_t chat_id = message->chat->id;
@@ -219,12 +226,12 @@ int main()
                                              catch (...)
                                              {
                                              }
-                                             
+
                                              if (user.needs_tv_box)
                                              {
                                                  tv_box_rental = 149; // Аренда ТВ-приставки
                                              }
-                                             
+
                                              int total_monthly = tariff_price + router_rental + tv_box_rental;
 
                                              std::string full_address = "г. " + user.city + ", ул. " + user.street + ", д. " + user.house;
@@ -238,12 +245,13 @@ int main()
                                              std::stringstream confirmation;
                                              confirmation << "✅ *Ваша заявка принята!*\n\n"
                                                           << "Скоро с вами свяжутся для уточнения деталей.\n\n";
-                                             if (!office_address.empty()) {
-                                                 confirmation << "Для подключения интернета подойдите по адресу:\n*" 
+                                             if (!office_address.empty())
+                                             {
+                                                 confirmation << "Для подключения интернета подойдите по адресу:\n*"
                                                               << office_address << "*\n\n"
                                                               << "**Не забудьте взять с собой паспорт!**";
                                              }
-                                             
+
                                              bot.getApi().sendMessage(chat_id, confirmation.str(), false, 0, nullptr, "Markdown");
 
                                              LOG(LogLevel::INFO, "WebApp application saved for user " << chat_id << ", total: " << total_monthly);
@@ -345,6 +353,14 @@ int main()
     {
         LOG(LogLevel::L_ERROR, "Telegram API ERROR: " << e.what());
     }
+
+    // Stop HTTP server
+    LOG(LogLevel::INFO, "Stopping HTTP API server...");
+    if (httpServer)
+    {
+        httpServer->stop();
+    }
+    LOG(LogLevel::INFO, "HTTP API server stopped.");
 
     LOG(LogLevel::INFO, "Closing database...");
     db_close();

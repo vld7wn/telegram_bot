@@ -28,6 +28,7 @@ add_library(bot_logic
 		excel_generate.cpp
 		faq_manager.cpp
 		handler_registration.cpp
+		http_server.cpp
 		logger.cpp
 		message_to_client.cpp
 		session_manager.cpp
