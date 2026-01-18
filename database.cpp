@@ -300,11 +300,13 @@ std::vector<ApplicationDataForReport> db_get_apps_data_for_report(const std::str
 // Получение всех заявок для API
 std::vector<ApplicationDataForReport> db_get_all_applications()
 {
+    LOG(LogLevel::INFO, "db_get_all_applications() called");
     std::vector<ApplicationDataForReport> results;
     std::string sql = "SELECT ID, USER_ID, TARIFF, NAME, PRICE, PHONE, EMAIL, ADDRESS, strftime('%Y-%m-%d %H:%M', TIMESTAMP), STATUS FROM applications ORDER BY ID DESC;";
     sqlite3_stmt *stmt;
     if (sqlite3_prepare_v2(db_main, sql.c_str(), -1, &stmt, 0) == SQLITE_OK)
     {
+        LOG(LogLevel::INFO, "db_get_all_applications: SQL prepared OK");
         while (sqlite3_step(stmt) == SQLITE_ROW)
         {
             ApplicationDataForReport app_data;
@@ -327,9 +329,15 @@ std::vector<ApplicationDataForReport> db_get_all_applications()
             const char *status = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 9));
             app_data.chat_status = status ? status : "";
             results.push_back(app_data);
+            LOG(LogLevel::INFO, "db_get_all_applications: found app ID=" << app_data.id);
         }
     }
+    else
+    {
+        LOG(LogLevel::L_ERROR, "db_get_all_applications: SQL prepare FAILED");
+    }
     sqlite3_finalize(stmt);
+    LOG(LogLevel::INFO, "db_get_all_applications() returning " << results.size() << " items");
     return results;
 }
 

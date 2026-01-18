@@ -146,7 +146,9 @@ void HttpServer::setupRoutes()
     // ========== APPLICATIONS ==========
     g_svr->Get("/api/applications", [](const httplib::Request &, httplib::Response &res)
                {
+                   LOG(LogLevel::INFO, "API: /api/applications called");
                    auto applications = db_get_all_applications();
+                   LOG(LogLevel::INFO, "API: db_get_all_applications returned " << applications.size() << " items");
                    json apps = json::array();
 
                    for (const auto &app : applications)

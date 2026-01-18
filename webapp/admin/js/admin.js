@@ -27,7 +27,6 @@ function initNavigation() {
             e.preventDefault();
             const page = item.dataset.page;
             showPage(page);
-            // Close sidebar on mobile after navigation
             closeSidebar();
         });
     });
@@ -55,18 +54,15 @@ function closeSidebar() {
 }
 
 function showPage(pageName) {
-    // Update navigation
     document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.toggle('active', item.dataset.page === pageName);
     });
 
-    // Update pages
     document.querySelectorAll('.page').forEach(page => {
         page.classList.remove('active');
     });
     document.getElementById(`page-${pageName}`).classList.add('active');
 
-    // Update title
     const titles = {
         'dashboard': 'Главная',
         'applications': 'Заявки',
@@ -89,61 +85,30 @@ function updateTime() {
 
 // ========== DATA LOADING ==========
 async function loadAllData() {
-    try {
-        // Try to load from API first
-        const results = await Promise.allSettled([
-            loadApplications(),
-            loadAdmins(),
-            loadTradePoints(),
-            loadTariffs(),
-            loadBotStatus(),
-            loadStats()
-        ]);
+    console.log('[Admin Panel] Loading data from API...');
 
-        // Check if all critical requests succeeded
-        const allSucceeded = results.every(r => r.status === 'fulfilled');
-        if (!allSucceeded) {
-            console.warn('Some API requests failed, using partial data');
+    const results = await Promise.allSettled([
+        loadApplications(),
+        loadAdmins(),
+        loadTradePoints(),
+        loadTariffs(),
+        loadBotStatus(),
+        loadStats()
+    ]);
+
+    results.forEach((result, index) => {
+        const names = ['applications', 'admins', 'tradePoints', 'tariffs', 'botStatus', 'stats'];
+        if (result.status === 'rejected') {
+            console.warn(`[Admin Panel] Failed to load ${names[index]}:`, result.reason);
         }
+    });
 
-        renderAll();
-    } catch (error) {
-        console.error('Error loading data:', error);
-        // Load fallback demo data if API is not available
-        await loadDemoData();
-    }
-}
-
-async function loadDemoData() {
-    // Demo data for testing without API
-    applications = [
-        { id: 1, name: 'Иван Петров', phone: '+7 999 123-45-67', tariff: 'Бизнес (100 Мбит/с)', address: 'г. Москва, ул. Ленина, д. 10, кв. 5', status: 'Новая', date: '2024-03-29 14:35', userId: 123456 },
-        { id: 2, name: 'Ольга Сидорова', phone: '+7 912 345-67-89', tariff: 'Базовый (50 Мбит/с)', address: 'г. Москва, пр. Мира, д. 45', status: 'В работе', date: '2024-03-29 12:20', userId: 234567 },
-        { id: 3, name: 'Алексей Смирнов', phone: '+7 903 987-65-43', tariff: 'Премиум (200 Мбит/с)', address: 'г. Москва, ул. Пушкина, д. 22', status: 'Выполнена', date: '2024-03-28 16:45', userId: 345678 },
-        { id: 4, name: 'Мария Козлова', phone: '+7 926 111-22-33', tariff: 'Базовый (50 Мбит/с)', address: 'г. Москва, ул. Гагарина, д. 8', status: 'Новая', date: '2024-03-29 10:15', userId: 456789 },
-        { id: 5, name: 'Дмитрий Волков', phone: '+7 915 444-55-66', tariff: 'Бизнес (100 Мбит/с)', address: 'г. Москва, ул. Чехова, д. 15', status: 'Отменена', date: '2024-03-27 09:30', userId: 567890 },
-    ];
-
-    admins = [
-        { userId: 111222333, name: 'Администратор 1', tradePoint: 'ТП-001', status: 'active' },
-        { userId: 222333444, name: 'Администратор 2', tradePoint: 'ТП-002', status: 'active' },
-    ];
-
-    pendingRequests = [
-        { userId: 333444555, name: 'Новый Админ', tradePoint: 'ТП-003' },
-    ];
-
-    tradePoints = [
-        { code: 'ТП-001', address: 'г. Москва, ул. Тверская, д. 1' },
-        { code: 'ТП-002', address: 'г. Москва, ул. Арбат, д. 10' },
-        { code: 'ТП-003', address: 'г. Москва, Кутузовский пр., д. 5' },
-    ];
-
-    tariffs = [
-        { id: 'basic', name: 'Базовый', speeds: ['50 Мбит/с', '100 Мбит/с'], price: '590 ₽' },
-        { id: 'business', name: 'Бизнес', speeds: ['100 Мбит/с', '200 Мбит/с'], price: '890 ₽' },
-        { id: 'premium', name: 'Премиум', speeds: ['200 Мбит/с', '500 Мбит/с'], price: '1290 ₽' },
-    ];
+    console.log('[Admin Panel] Data loaded:', {
+        applications: applications.length,
+        admins: admins.length,
+        tradePoints: tradePoints.length,
+        tariffs: tariffs.length
+    });
 
     renderAll();
 }
@@ -214,20 +179,15 @@ function renderAll() {
 }
 
 function updateDashboard() {
-    // Calculate stats from local applications array (fallback if API stats not loaded)
     const total = applications.length;
     const newCount = applications.filter(a => (a.status || '').includes('Новая')).length;
     const inProgress = applications.filter(a => (a.status || '').includes('В работе')).length;
     const completed = applications.filter(a => (a.status || '').includes('Выполнена')).length;
 
-    // Only update if values are currently 0 (not already set by loadStats)
-    const statTotal = document.getElementById('statTotal');
-    if (statTotal.textContent === '0' || statTotal.textContent === '156') {
-        statTotal.textContent = total;
-        document.getElementById('statNew').textContent = newCount;
-        document.getElementById('statInProgress').textContent = inProgress;
-        document.getElementById('statCompleted').textContent = completed;
-    }
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statNew').textContent = newCount;
+    document.getElementById('statInProgress').textContent = inProgress;
+    document.getElementById('statCompleted').textContent = completed;
 
     renderRecentApplications();
     renderChart();
@@ -235,32 +195,45 @@ function updateDashboard() {
 
 function renderRecentApplications() {
     const tbody = document.getElementById('recentApplicationsBody');
+    if (!tbody) return;
+
     const recent = applications.slice(0, 5);
+
+    if (recent.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">Нет заявок</td></tr>';
+        return;
+    }
 
     tbody.innerHTML = recent.map(app => `
         <tr>
             <td>${app.id}</td>
-            <td>${app.name}</td>
-            <td>${app.phone}</td>
-            <td>${app.tariff}</td>
-            <td><span class="status-badge ${getStatusClass(app.status)}">${app.status}</span></td>
-            <td>${app.date}</td>
+            <td>${app.name || '-'}</td>
+            <td>${app.phone || '-'}</td>
+            <td>${app.tariff || '-'}</td>
+            <td><span class="status-badge ${getStatusClass(app.status)}">${app.status || 'Новая'}</span></td>
+            <td>${app.date || '-'}</td>
         </tr>
     `).join('');
 }
 
 function renderApplicationsTable() {
     const tbody = document.getElementById('applicationsBody');
+    if (!tbody) return;
+
+    if (applications.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-secondary);">Нет заявок</td></tr>';
+        return;
+    }
 
     tbody.innerHTML = applications.map(app => `
         <tr>
             <td>${app.id}</td>
-            <td>${app.name}</td>
-            <td>${app.phone}</td>
-            <td>${app.tariff}</td>
-            <td>${app.address}</td>
-            <td><span class="status-badge ${getStatusClass(app.status)}">${app.status}</span></td>
-            <td>${app.date}</td>
+            <td>${app.name || '-'}</td>
+            <td>${app.phone || '-'}</td>
+            <td>${app.tariff || '-'}</td>
+            <td>${app.address || '-'}</td>
+            <td><span class="status-badge ${getStatusClass(app.status)}">${app.status || 'Новая'}</span></td>
+            <td>${app.date || '-'}</td>
             <td>
                 <div class="action-buttons">
                     <button class="btn-view" onclick="viewApplication(${app.id})">👁</button>
@@ -272,17 +245,17 @@ function renderApplicationsTable() {
 }
 
 function getStatusClass(status) {
-    switch (status) {
-        case 'Новая': return 'new';
-        case 'В работе': return 'in-progress';
-        case 'Выполнена': return 'completed';
-        case 'Отменена': return 'cancelled';
-        default: return '';
-    }
+    if (!status) return 'new';
+    if (status.includes('Новая')) return 'new';
+    if (status.includes('В работе')) return 'in-progress';
+    if (status.includes('Выполнена')) return 'completed';
+    if (status.includes('Отменена')) return 'cancelled';
+    return '';
 }
 
 function renderAdminsList() {
     const container = document.getElementById('adminsList');
+    if (!container) return;
 
     if (admins.length === 0) {
         container.innerHTML = '<p style="color: var(--text-secondary);">Нет активных администраторов</p>';
@@ -294,17 +267,18 @@ function renderAdminsList() {
             <div class="admin-info">
                 <div class="admin-avatar">👤</div>
                 <div class="admin-details">
-                    <h4>${admin.name}</h4>
-                    <p>ID: ${admin.userId} | Точка: ${admin.tradePoint}</p>
+                    <h4>${admin.name || 'Без имени'}</h4>
+                    <p>ID: ${admin.userId || admin.user_id} | Точка: ${admin.tradePoint || admin.trade_point || '-'}</p>
                 </div>
             </div>
-            <button class="btn btn-danger" onclick="deleteAdmin(${admin.userId})">🗑</button>
+            <button class="btn btn-danger" onclick="deleteAdmin(${admin.userId || admin.user_id})">🗑</button>
         </div>
     `).join('');
 }
 
 function renderPendingRequests() {
     const container = document.getElementById('pendingRequests');
+    if (!container) return;
 
     if (pendingRequests.length === 0) {
         container.innerHTML = '<p style="color: var(--text-secondary);">Нет ожидающих запросов</p>';
@@ -313,11 +287,11 @@ function renderPendingRequests() {
 
     container.innerHTML = pendingRequests.map(req => `
         <div class="request-card">
-            <h4>${req.name}</h4>
-            <p>ID: ${req.userId} | Точка: ${req.tradePoint}</p>
+            <h4>${req.name || 'Без имени'}</h4>
+            <p>ID: ${req.userId || req.user_id} | Точка: ${req.tradePoint || req.trade_point || '-'}</p>
             <div class="request-actions">
-                <button class="btn-approve" onclick="approveAdmin(${req.userId})">✅ Одобрить</button>
-                <button class="btn-decline" onclick="declineAdmin(${req.userId})">❌ Отклонить</button>
+                <button class="btn-approve" onclick="approveAdmin(${req.userId || req.user_id})">✅ Одобрить</button>
+                <button class="btn-decline" onclick="declineAdmin(${req.userId || req.user_id})">❌ Отклонить</button>
             </div>
         </div>
     `).join('');
@@ -325,6 +299,12 @@ function renderPendingRequests() {
 
 function renderTradePoints() {
     const container = document.getElementById('tradePointsList');
+    if (!container) return;
+
+    if (tradePoints.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-secondary);">Нет торговых точек</p>';
+        return;
+    }
 
     container.innerHTML = tradePoints.map(tp => `
         <div class="admin-card">
@@ -335,31 +315,46 @@ function renderTradePoints() {
                     <p>${tp.address}</p>
                 </div>
             </div>
-            <button class="btn btn-danger" onclick="deleteTradePoint('${tp.code}')">🗑</button>
+            <div class="action-buttons">
+                <button class="btn btn-secondary" onclick="editTradePoint('${tp.code}')">✏️</button>
+                <button class="btn btn-danger" onclick="deleteTradePoint('${tp.code}')">🗑</button>
+            </div>
         </div>
     `).join('');
 }
 
 function renderTariffs() {
     const container = document.getElementById('tariffsList');
+    if (!container) return;
 
-    container.innerHTML = tariffs.map(t => `
-        <div class="admin-card">
-            <div class="admin-info">
-                <div class="admin-avatar">💰</div>
-                <div class="admin-details">
-                    <h4>${t.name}</h4>
-                    <p>От ${t.price} | Скорости: ${t.speeds.join(', ')}</p>
+    if (tariffs.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-secondary);">Нет тарифов</p>';
+        return;
+    }
+
+    container.innerHTML = tariffs.map(t => {
+        const speedsText = (t.speeds || []).map(s => `${s.value} ${s.unit || 'Мбит/с'}`).join(', ');
+        const priceText = (t.speeds && t.speeds[0]) ? `${t.speeds[0].price} ₽` : '-';
+
+        return `
+            <div class="admin-card">
+                <div class="admin-info">
+                    <div class="admin-avatar">💰</div>
+                    <div class="admin-details">
+                        <h4>${t.name || t.id}</h4>
+                        <p>От ${priceText} | Скорости: ${speedsText || '-'}</p>
+                    </div>
                 </div>
+                <button class="btn btn-secondary" onclick="editTariff('${t.id}')">✏️ Редактировать</button>
             </div>
-            <button class="btn btn-secondary" onclick="editTariff('${t.id}')">✏️ Редактировать</button>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 function populateTradePointSelects() {
     const selects = document.querySelectorAll('#newAdminTradePoint, #filterTradePoint');
     selects.forEach(select => {
+        if (!select) return;
         const currentValue = select.value;
         const isFilter = select.id === 'filterTradePoint';
 
@@ -376,20 +371,33 @@ function renderChart() {
     const ctx = document.getElementById('applicationsChart');
     if (!ctx) return;
 
-    // Destroy existing chart if any
     if (window.applicationsChartInstance) {
         window.applicationsChartInstance.destroy();
     }
 
-    // Generate last 30 days labels
-    const labels = [];
-    const data = [];
+    // Generate data from real applications
+    const last30Days = {};
     for (let i = 29; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
-        labels.push(date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }));
-        data.push(Math.floor(Math.random() * 10) + 1); // Demo data
+        const key = date.toISOString().split('T')[0];
+        last30Days[key] = 0;
     }
+
+    applications.forEach(app => {
+        if (app.date) {
+            const dateKey = app.date.split(' ')[0];
+            if (last30Days.hasOwnProperty(dateKey)) {
+                last30Days[dateKey]++;
+            }
+        }
+    });
+
+    const labels = Object.keys(last30Days).map(d => {
+        const date = new Date(d);
+        return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+    });
+    const data = Object.values(last30Days);
 
     window.applicationsChartInstance = new Chart(ctx, {
         type: 'line',
@@ -411,27 +419,16 @@ function renderChart() {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: {
-                    display: false
-                }
+                legend: { display: false }
             },
             scales: {
                 x: {
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.05)'
-                    },
-                    ticks: {
-                        color: 'rgba(255, 255, 255, 0.5)',
-                        maxTicksLimit: 7
-                    }
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: 'rgba(255, 255, 255, 0.5)', maxTicksLimit: 7 }
                 },
                 y: {
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.05)'
-                    },
-                    ticks: {
-                        color: 'rgba(255, 255, 255, 0.5)'
-                    },
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: 'rgba(255, 255, 255, 0.5)' },
                     beginAtZero: true
                 }
             }
@@ -503,19 +500,23 @@ function viewApplication(appId) {
     document.getElementById('applicationDetails').innerHTML = `
         <div class="form-group">
             <label>Имя клиента</label>
-            <p style="font-size: 16px;">${app.name}</p>
+            <p style="font-size: 16px;">${app.name || '-'}</p>
         </div>
         <div class="form-group">
             <label>Телефон</label>
-            <p style="font-size: 16px;">${app.phone}</p>
+            <p style="font-size: 16px;">${app.phone || '-'}</p>
+        </div>
+        <div class="form-group">
+            <label>Email</label>
+            <p style="font-size: 16px;">${app.email || '-'}</p>
         </div>
         <div class="form-group">
             <label>Тариф</label>
-            <p style="font-size: 16px;">${app.tariff}</p>
+            <p style="font-size: 16px;">${app.tariff || '-'}</p>
         </div>
         <div class="form-group">
             <label>Адрес</label>
-            <p style="font-size: 16px;">${app.address}</p>
+            <p style="font-size: 16px;">${app.address || '-'}</p>
         </div>
         <div class="form-group">
             <label>Статус</label>
@@ -528,7 +529,7 @@ function viewApplication(appId) {
         </div>
         <div class="form-group">
             <label>Дата создания</label>
-            <p style="font-size: 16px;">${app.date}</p>
+            <p style="font-size: 16px;">${app.date || '-'}</p>
         </div>
     `;
 
@@ -547,21 +548,22 @@ async function addAdmin() {
     }
 
     try {
-        await fetch(`${API_BASE}/admins`, {
+        const response = await fetch(`${API_BASE}/admins`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userId: parseInt(userId), name, tradePoint })
         });
 
-        admins.push({ userId: parseInt(userId), name, tradePoint, status: 'active' });
-        renderAdminsList();
-        closeModal('addAdminModal');
+        if (response.ok) {
+            await loadAdmins();
+            renderAdminsList();
+            closeModal('addAdminModal');
+        } else {
+            alert('Ошибка при добавлении админа');
+        }
     } catch (error) {
         console.error('Error adding admin:', error);
-        // Demo mode: add locally
-        admins.push({ userId: parseInt(userId), name, tradePoint, status: 'active' });
-        renderAdminsList();
-        closeModal('addAdminModal');
+        alert('Ошибка подключения к API');
     }
 }
 
@@ -570,39 +572,32 @@ async function deleteAdmin(userId) {
 
     try {
         await fetch(`${API_BASE}/admins/${userId}`, { method: 'DELETE' });
+        await loadAdmins();
+        renderAdminsList();
     } catch (error) {
         console.error('Error deleting admin:', error);
     }
-
-    admins = admins.filter(a => a.userId !== userId);
-    renderAdminsList();
 }
 
 async function approveAdmin(userId) {
     try {
         await fetch(`${API_BASE}/admins/${userId}/approve`, { method: 'POST' });
-    } catch (error) {
-        console.error('Error approving admin:', error);
-    }
-
-    const request = pendingRequests.find(r => r.userId === userId);
-    if (request) {
-        admins.push({ ...request, status: 'active' });
-        pendingRequests = pendingRequests.filter(r => r.userId !== userId);
+        await loadAdmins();
         renderAdminsList();
         renderPendingRequests();
+    } catch (error) {
+        console.error('Error approving admin:', error);
     }
 }
 
 async function declineAdmin(userId) {
     try {
         await fetch(`${API_BASE}/admins/${userId}/decline`, { method: 'POST' });
+        await loadAdmins();
+        renderPendingRequests();
     } catch (error) {
         console.error('Error declining admin:', error);
     }
-
-    pendingRequests = pendingRequests.filter(r => r.userId !== userId);
-    renderPendingRequests();
 }
 
 // ========== APPLICATION ACTIONS ==========
@@ -628,32 +623,113 @@ async function updateApplicationStatus(appId, newStatus) {
 }
 
 function openMessageModal(userId) {
-    // TODO: Implement message sending
     alert(`Отправка сообщения пользователю ${userId}`);
 }
 
 function sendMessageToClient() {
-    // TODO: Implement message sending
-    alert('Функция отправки сообщения будет реализована с HTTP API');
+    alert('Функция отправки сообщения будет реализована');
     closeModal('applicationModal');
 }
 
-// ========== EXPORT ==========
-function exportToExcel() {
-    // Create CSV content
-    let csv = 'ID,Имя,Телефон,Тариф,Адрес,Статус,Дата\n';
+// ========== TRADE POINTS ACTIONS ==========
+function showAddTradePointModal() {
+    showModal('addTradePointModal');
+}
+
+async function addTradePoint() {
+    const code = document.getElementById('newTradePointCode')?.value;
+    const address = document.getElementById('newTradePointAddress')?.value;
+
+    if (!code || !address) {
+        alert('Заполните все поля');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/trade-points`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code, address })
+        });
+
+        if (response.ok) {
+            await loadTradePoints();
+            renderTradePoints();
+            closeModal('addTradePointModal');
+        } else {
+            alert('Ошибка при добавлении торговой точки');
+        }
+    } catch (error) {
+        console.error('Error adding trade point:', error);
+        alert('Ошибка подключения к API');
+    }
+}
+
+function editTradePoint(code) {
+    const tp = tradePoints.find(t => t.code === code);
+    if (!tp) return;
+
+    const newAddress = prompt('Введите новый адрес:', tp.address);
+    if (newAddress && newAddress !== tp.address) {
+        // TODO: Implement API call to update trade point
+        alert('Редактирование торговых точек будет реализовано в API');
+    }
+}
+
+async function deleteTradePoint(code) {
+    if (!confirm(`Удалить торговую точку ${code}?`)) return;
+
+    try {
+        const response = await fetch(`${API_BASE}/trade-points/${code}`, { method: 'DELETE' });
+        if (response.ok) {
+            await loadTradePoints();
+            renderTradePoints();
+        } else {
+            alert('Ошибка при удалении');
+        }
+    } catch (error) {
+        console.error('Error deleting trade point:', error);
+        alert('Ошибка подключения к API');
+    }
+}
+
+// ========== TARIFFS ACTIONS ==========
+function showAddTariffModal() {
+    alert('Добавление тарифов будет реализовано');
+}
+
+function editTariff(tariffId) {
+    const tariff = tariffs.find(t => t.id === tariffId);
+    if (!tariff) return;
+
+    alert(`Редактирование тарифа "${tariff.name}" будет реализовано`);
+}
+
+// ========== EXPORT (ЗАГРУЗИТЬ) ==========
+function downloadExcel() {
+    if (applications.length === 0) {
+        alert('Нет данных для экспорта');
+        return;
+    }
+
+    // Create CSV with BOM for Excel compatibility
+    let csv = '\uFEFFID;Имя;Телефон;Email;Тариф;Адрес;Статус;Дата\n';
     applications.forEach(app => {
-        csv += `${app.id},"${app.name}","${app.phone}","${app.tariff}","${app.address}","${app.status}","${app.date}"\n`;
+        csv += `${app.id};"${app.name || ''}";"${app.phone || ''}";"${app.email || ''}";"${app.tariff || ''}";"${app.address || ''}";"${app.status || ''}";"${app.date || ''}"\n`;
     });
 
-    // Download
-    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([csv], { type: 'application/vnd.ms-excel;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `applications_${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `applications_${new Date().toISOString().split('T')[0]}.xls`;
     link.click();
     URL.revokeObjectURL(url);
+}
+
+// Legacy function name for compatibility
+function exportToExcel() {
+    downloadExcel();
 }
 
 // ========== BROADCAST ==========
@@ -676,7 +752,7 @@ async function sendBroadcast() {
         document.getElementById('broadcastMessage').value = '';
     } catch (error) {
         console.error('Error sending broadcast:', error);
-        alert('Ошибка при отправке. Проверьте подключение к API.');
+        alert('Ошибка при отправке.');
     }
 }
 
@@ -686,14 +762,14 @@ document.getElementById('filterStatus')?.addEventListener('change', filterApplic
 document.getElementById('filterTradePoint')?.addEventListener('change', filterApplications);
 
 function filterApplications() {
-    const search = document.getElementById('searchApplications').value.toLowerCase();
-    const statusFilter = document.getElementById('filterStatus').value;
+    const search = (document.getElementById('searchApplications')?.value || '').toLowerCase();
+    const statusFilter = document.getElementById('filterStatus')?.value || '';
 
     const filtered = applications.filter(app => {
         const matchesSearch = !search ||
-            app.name.toLowerCase().includes(search) ||
-            app.phone.includes(search) ||
-            app.address.toLowerCase().includes(search);
+            (app.name || '').toLowerCase().includes(search) ||
+            (app.phone || '').includes(search) ||
+            (app.address || '').toLowerCase().includes(search);
 
         const matchesStatus = !statusFilter || app.status === statusFilter;
 
@@ -701,15 +777,22 @@ function filterApplications() {
     });
 
     const tbody = document.getElementById('applicationsBody');
+    if (!tbody) return;
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-secondary);">Ничего не найдено</td></tr>';
+        return;
+    }
+
     tbody.innerHTML = filtered.map(app => `
         <tr>
             <td>${app.id}</td>
-            <td>${app.name}</td>
-            <td>${app.phone}</td>
-            <td>${app.tariff}</td>
-            <td>${app.address}</td>
-            <td><span class="status-badge ${getStatusClass(app.status)}">${app.status}</span></td>
-            <td>${app.date}</td>
+            <td>${app.name || '-'}</td>
+            <td>${app.phone || '-'}</td>
+            <td>${app.tariff || '-'}</td>
+            <td>${app.address || '-'}</td>
+            <td><span class="status-badge ${getStatusClass(app.status)}">${app.status || 'Новая'}</span></td>
+            <td>${app.date || '-'}</td>
             <td>
                 <div class="action-buttons">
                     <button class="btn-view" onclick="viewApplication(${app.id})">👁</button>
