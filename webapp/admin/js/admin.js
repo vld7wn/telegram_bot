@@ -27,8 +27,31 @@ function initNavigation() {
             e.preventDefault();
             const page = item.dataset.page;
             showPage(page);
+            // Close sidebar on mobile after navigation
+            closeSidebar();
         });
     });
+}
+
+// ========== MOBILE SIDEBAR ==========
+function toggleSidebar() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const menuBtn = document.getElementById('menuToggle');
+
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
+    menuBtn.classList.toggle('active');
+}
+
+function closeSidebar() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const menuBtn = document.getElementById('menuToggle');
+
+    sidebar.classList.remove('open');
+    overlay.classList.remove('active');
+    menuBtn.classList.remove('active');
 }
 
 function showPage(pageName) {

@@ -10,6 +10,9 @@
 </head>
 
 <body>
+    <!-- Mobile Menu Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
     <div class="app-container">
         <!-- Sidebar -->
         <aside class="sidebar">
@@ -45,6 +48,9 @@
         <main class="main-content">
             <!-- Header -->
             <header class="top-header">
+                <button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()">
+                    <span></span><span></span><span></span>
+                </button>
                 <h1 class="main-title">Telegram Бот: Управление</h1>
                 <div class="header-time">
                     <span class="time" id="currentTime">14:35</span>
