@@ -204,14 +204,28 @@ int main()
                                              user.apartment = data.value("apartment", "не указана");
                                              user.needs_tv_box = data.value("needsTvBox", false);
 
-                                             int price = 0;
+                                             // Получаем адрес офиса по коду торговой точки
+                                             std::string office_address;
+                                             get_address_by_code(user.flyer_code, office_address);
+
+                                             // Расчёт стоимости с учётом аренды роутера и ТВ-приставки
+                                             int tariff_price = 0;
+                                             int router_rental = 149; // Фиксированная аренда роутера
+                                             int tv_box_rental = 0;
                                              try
                                              {
-                                                 price = std::stoi(data.value("price", "0"));
+                                                 tariff_price = std::stoi(data.value("price", "0"));
                                              }
                                              catch (...)
                                              {
                                              }
+                                             
+                                             if (user.needs_tv_box)
+                                             {
+                                                 tv_box_rental = 149; // Аренда ТВ-приставки
+                                             }
+                                             
+                                             int total_monthly = tariff_price + router_rental + tv_box_rental;
 
                                              std::string full_address = "г. " + user.city + ", ул. " + user.street + ", д. " + user.house;
                                              if (!user.apartment.empty() && user.apartment != "не указана")
@@ -219,20 +233,27 @@ int main()
                                                  full_address += ", кв. " + user.apartment;
                                              }
 
-                                             db_add_application(chat_id, user, full_address, price);
+                                             db_add_application(chat_id, user, full_address, total_monthly);
 
-                                             bot.getApi().sendMessage(chat_id,
-                                                                      "✅ *Ваша заявка принята!*\n\nСкоро с вами свяжутся для уточнения деталей.",
-                                                                      false, 0, nullptr, "Markdown");
+                                             std::stringstream confirmation;
+                                             confirmation << "✅ *Ваша заявка принята!*\n\n"
+                                                          << "Скоро с вами свяжутся для уточнения деталей.\n\n";
+                                             if (!office_address.empty()) {
+                                                 confirmation << "Для подключения интернета подойдите по адресу:\n*" 
+                                                              << office_address << "*\n\n"
+                                                              << "**Не забудьте взять с собой паспорт!**";
+                                             }
+                                             
+                                             bot.getApi().sendMessage(chat_id, confirmation.str(), false, 0, nullptr, "Markdown");
 
-                                             LOG(LogLevel::INFO, "WebApp application saved for user " << chat_id);
+                                             LOG(LogLevel::INFO, "WebApp application saved for user " << chat_id << ", total: " << total_monthly);
                                          }
                                          catch (const std::exception &e)
                                          {
                                              LOG(LogLevel::L_ERROR, "Failed to parse WebApp data: " << e.what());
                                              bot.getApi().sendMessage(chat_id, "Ошибка обработки заявки. Попробуйте ещё раз.");
                                          }
-                                         sendMainMenu(bot, chat_id);
+                                         sendPostApplicationMenu(bot, chat_id);
                                          return;
                                      }
 
