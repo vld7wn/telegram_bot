@@ -1,7 +1,7 @@
 // ========== ADMIN PANEL JAVASCRIPT ==========
 
-// API Configuration
-const API_BASE = 'http://localhost:8080/api';
+// API Configuration - использует Render.com для production
+const API_BASE = 'https://telegram-bot-lqlw.onrender.com/api';
 
 // State
 let currentPage = 'dashboard';
