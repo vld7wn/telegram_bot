@@ -173,8 +173,10 @@ body::before {
 /* ========== STATS CONTAINER ========== */
 .stats-container {
     display: flex;
-    gap: 24px;
-    padding: 24px;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 20px 24px;
 }
 
 .stat-item {
