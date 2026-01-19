@@ -17,11 +17,11 @@ RUN apt-get update && apt-get install -y \
     ninja-build \
     && rm -rf /var/lib/apt/lists/*
 
-# Install vcpkg and dependencies
+# Install vcpkg and dependencies (without xlnt - using CSV fallback)
 WORKDIR /opt
 RUN git clone https://github.com/Microsoft/vcpkg.git && \
     ./vcpkg/bootstrap-vcpkg.sh && \
-    ./vcpkg/vcpkg install tgbot-cpp nlohmann-json xlnt cpp-httplib
+    ./vcpkg/vcpkg install tgbot-cpp nlohmann-json cpp-httplib
 
 # Copy source code
 WORKDIR /app
