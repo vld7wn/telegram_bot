@@ -23,7 +23,13 @@ if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 endif()
 
 find_package(Boost REQUIRED system)
-find_package(xlnt REQUIRED)
+find_package(xlnt QUIET)
+if(xlnt_FOUND)
+    message(STATUS "xlnt found - Excel export enabled")
+    add_definitions(-DHAS_XLNT)
+else()
+    message(STATUS "xlnt not found - Excel export disabled")
+endif()
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
 find_package(nlohmann_json REQUIRED)
 
@@ -81,7 +87,6 @@ target_link_libraries(bot_logic PRIVATE
 		${TGBOT_LIB}
 
 		# Остальные библиотеки, найденные через find_package
-		xlnt::xlnt
 		unofficial::sqlite3::sqlite3
 		nlohmann_json::nlohmann_json
 		Boost::system
@@ -90,12 +95,21 @@ target_link_libraries(bot_logic PRIVATE
 		OpenSSL::SSL
 		OpenSSL::Crypto
 		CURL::libcurl
-		
-		# Системные библиотеки Windows для сети
-		ws2_32
-		wsock32
-		crypt32
 )
+
+# Условная линковка xlnt если найдена
+if(xlnt_FOUND)
+    target_link_libraries(bot_logic PRIVATE xlnt::xlnt)
+endif()
+
+# Системные библиотеки Windows для сети
+if(WIN32)
+    target_link_libraries(bot_logic PRIVATE
+        ws2_32
+        wsock32
+        crypt32
+    )
+endif()
 
 # --- ОПРЕДЕЛЕНИЕ ИСПОЛНЯЕМОГО ФАЙЛА ---
 add_executable(my_telegram_bot main.cpp)
