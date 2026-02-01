@@ -100,10 +100,11 @@ else()
     target_include_directories(bot_logic PRIVATE ${Boost_INCLUDE_DIRS})
 endif()
 		
-		# OpenSSL и CURL (уже включены в TgBot::TgBot, но можно оставить явно)
-		OpenSSL::SSL
-		OpenSSL::Crypto
-		CURL::libcurl
+target_link_libraries(bot_logic PRIVATE
+    # OpenSSL и CURL (уже включены в TgBot::TgBot, но можно оставить явно)
+    OpenSSL::SSL
+    OpenSSL::Crypto
+    CURL::libcurl
 )
 
 # Условная линковка xlnt если найдена
