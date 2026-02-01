@@ -30,6 +30,8 @@ cd ..
 
 # 3. Build the Bot
 echo "🤖 Building My Telegram Bot..."
+echo "🧹 Cleaning up previous build..."
+rm -rf build
 mkdir -p build
 cd build
 
