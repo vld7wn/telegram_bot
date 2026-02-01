@@ -8,8 +8,8 @@ echo "🚀 Starting Termux Setup..."
 echo "📦 Installing system dependencies..."
 pkg update -y
 pkg install -y clang cmake make git \
-    boost libcurl-dev openssl-tool libsqlite \
-    nlohmann-json-dev binutils
+    boost libcurl openssl libsqlite \
+    nlohmann-json binutils || { echo "❌ Failed to install dependencies"; exit 1; }
 
 # 2. Check/Install TgBot-cpp
 if [ ! -d "tgbot-cpp" ]; then
