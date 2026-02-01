@@ -22,7 +22,7 @@ if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file")
 endif()
 
-find_package(Boost REQUIRED system)
+find_package(Boost REQUIRED)
 find_package(xlnt QUIET)
 if(xlnt_FOUND)
     message(STATUS "xlnt found - Excel export enabled")
@@ -89,7 +89,16 @@ target_link_libraries(bot_logic PRIVATE
 		# Остальные библиотеки, найденные через find_package
 		unofficial::sqlite3::sqlite3
 		nlohmann_json::nlohmann_json
-		Boost::system
+)
+
+if(TARGET Boost::system)
+    target_link_libraries(bot_logic PRIVATE Boost::system)
+elseif(TARGET Boost::boost)
+    target_link_libraries(bot_logic PRIVATE Boost::boost)
+else()
+    message(STATUS "Boost target not found, assuming headers are available")
+    target_include_directories(bot_logic PRIVATE ${Boost_INCLUDE_DIRS})
+endif()
 		
 		# OpenSSL и CURL (уже включены в TgBot::TgBot, но можно оставить явно)
 		OpenSSL::SSL
