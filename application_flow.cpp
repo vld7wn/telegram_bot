@@ -437,7 +437,7 @@ void handle_client_callback(TgBot::Bot &bot, TgBot::CallbackQuery::Ptr query)
             user.flyer_code = code;
             user.office_address = address;
             bot.getApi().answerCallbackQuery(query->id);
-            bot.getApi().editMessageText("✅ Код точки " + code + " принят.\nВаш офис: *" + address + "*", chat_id, message_id, "", "Markdown", false, nullptr);
+            bot.getApi().editMessageText("✅ Код точки " + code + " принят.\nВаш офис: *" + address + "*", chat_id, message_id, "", "Markdown", nullptr, nullptr);
             sendTariffSelection(bot, chat_id);
             LOG(LogLevel::INFO, "Called sendTariffSelection for chat ID: " << chat_id);
         }
@@ -469,7 +469,7 @@ void handle_client_callback(TgBot::Bot &bot, TgBot::CallbackQuery::Ptr query)
 
         TgBot::InlineKeyboardMarkup::Ptr speed_keyboard = create_tariff_speed_buttons(tariff_id);
 
-        bot.getApi().editMessageText(selected_tariff.get_tariff_description(), chat_id, message_id, "", "Markdown", false, speed_keyboard);
+        bot.getApi().editMessageText(selected_tariff.get_tariff_description(), chat_id, message_id, "", "Markdown", nullptr, speed_keyboard);
         user.state = UserState::VIEWING_TARIFF_DETAILS;
         db_save_user_state(chat_id, user.state);
         LOG(LogLevel::INFO, "User (ID: " << chat_id << ") is viewing details for tariff: " << selected_tariff.name);
@@ -533,7 +533,7 @@ void handle_client_callback(TgBot::Bot &bot, TgBot::CallbackQuery::Ptr query)
 
             std::string text_message = "✅ Выбрали: " + user.final_tariff_string + "\n";
             text_message += "Нужна ли вам ТВ-приставка в аренду за " + current_tariff.tv_box_rental + "?";
-            bot.getApi().editMessageText(text_message, chat_id, message_id, "", "Markdown", false, tv_keyboard);
+            bot.getApi().editMessageText(text_message, chat_id, message_id, "", "Markdown", nullptr, tv_keyboard);
             LOG(LogLevel::INFO, "User (ID: " << chat_id << ") needs to choose TV box for tariff: " << user.final_tariff_string);
         }
         else

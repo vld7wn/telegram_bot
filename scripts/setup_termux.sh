@@ -17,6 +17,11 @@ pkg install -y clang cmake make git \
 if [ ! -d "tgbot-cpp" ]; then
     echo "⬇️ Cloning tgbot-cpp..."
     git clone https://github.com/reo7sp/tgbot-cpp.git
+else
+    echo "🔄 Updating tgbot-cpp..."
+    cd tgbot-cpp
+    git pull
+    cd ..
 fi
 
 echo "⚙️ Building tgbot-cpp (this might take a while)..."
