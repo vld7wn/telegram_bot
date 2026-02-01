@@ -12,9 +12,11 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Устанавливаем версию Windows 10 для поддержки cpp-httplib
-add_compile_definitions(_WIN32_WINNT=0x0A00)
-add_compile_definitions(WINVER=0x0A00)
+if(WIN32)
+    # Устанавливаем версию Windows 10 для поддержки cpp-httplib
+    add_compile_definitions(_WIN32_WINNT=0x0A00)
+    add_compile_definitions(WINVER=0x0A00)
+endif()
 
 # --- ПОИСК ЗАВИСИМОСТЕЙ (VCPKG) ---
 # Toolchain передаётся через -DCMAKE_TOOLCHAIN_FILE или автоматически через VCPKG_ROOT
