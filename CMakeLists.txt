@@ -30,7 +30,14 @@ if(xlnt_FOUND)
 else()
     message(STATUS "xlnt not found - Excel export disabled")
 endif()
-find_package(unofficial-sqlite3 CONFIG REQUIRED)
+find_package(unofficial-sqlite3 CONFIG QUIET)
+if(unofficial-sqlite3_FOUND)
+    set(SQLITE_TARGET unofficial::sqlite3::sqlite3)
+else()
+    find_package(SQLite3 REQUIRED)
+    set(SQLITE_TARGET SQLite::SQLite3)
+endif()
+
 find_package(nlohmann_json REQUIRED)
 
 # find_package(TgBot) не сработал, ищем библиотеку вручную
@@ -87,8 +94,9 @@ target_link_libraries(bot_logic PRIVATE
 		${TGBOT_LIB}
 
 		# Остальные библиотеки, найденные через find_package
-		unofficial::sqlite3::sqlite3
+		${SQLITE_TARGET}
 		nlohmann_json::nlohmann_json
+
 )
 
 if(TARGET Boost::system)
