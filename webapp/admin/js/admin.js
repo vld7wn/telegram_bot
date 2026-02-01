@@ -120,7 +120,10 @@ function updateTime() {
     const now = new Date();
     const time = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
     const date = now.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
-    document.getElementById('currentTime').textContent = `${time} | ${date}`;
+
+    document.getElementById('currentTime').textContent = time;
+    const dateEl = document.getElementById('currentDate');
+    if (dateEl) dateEl.textContent = date;
 }
 
 // ========== DATA LOADING ==========
