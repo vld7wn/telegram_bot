@@ -252,7 +252,7 @@ int main()
                                                               << "**Не забудьте взять с собой паспорт!**";
                                              }
 
-                                             bot.getApi().sendMessage(chat_id, confirmation.str(), false, 0, nullptr, "Markdown");
+                                             bot.getApi().sendMessage(chat_id, confirmation.str(), nullptr, nullptr, nullptr, "Markdown");
 
                                              LOG(LogLevel::INFO, "WebApp application saved for user " << chat_id << ", total: " << total_monthly);
                                          }

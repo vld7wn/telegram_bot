@@ -277,7 +277,7 @@ public:
 
         // Формирование счёта для клиента
         std::string client_invoice = formatClientInvoice(user, total_monthly, rent_details, connection_fee);
-        bot.getApi().sendMessage(chat_id, client_invoice, false, 0, nullptr, "Markdown");
+        bot.getApi().sendMessage(chat_id, client_invoice, nullptr, nullptr, nullptr, "Markdown");
 
         // Сохранение в БД
         std::string full_address = formatFullAddress(user);
@@ -295,7 +295,7 @@ public:
                                     "Для подключения интернета подойдите по адресу:\n*" +
                                     user.office_address + "*\n\n"
                                                           "**Не забудьте взять с собой паспорт!**";
-        bot.getApi().sendMessage(chat_id, final_message, false, 0, nullptr, "Markdown");
+        bot.getApi().sendMessage(chat_id, final_message, nullptr, nullptr, nullptr, "Markdown");
         sendMainMenu(bot, chat_id);
 
         return true;

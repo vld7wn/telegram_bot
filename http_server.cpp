@@ -241,7 +241,7 @@ void HttpServer::setupRoutes()
                              std::string message = "🔔 Статус вашей заявки №" + std::to_string(app_id) + " изменен на: *" + status + "*";
                              try
                              {
-                                 bot_.getApi().sendMessage(app_opt->user_id, message, false, 0, nullptr, "Markdown");
+                                 bot_.getApi().sendMessage(app_opt->user_id, message, nullptr, nullptr, nullptr, "Markdown");
                                  LOG(LogLevel::INFO, "API: Status notification sent to user " + std::to_string(app_opt->user_id));
                              }
                              catch (const std::exception &e)

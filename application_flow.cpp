@@ -36,7 +36,7 @@ bool handle_main_menu_buttons(TgBot::Bot &bot, TgBot::Message::Ptr message)
     if (message->text == "📂 Мои заявки")
     {
         std::string my_apps = db_get_my_apps(chat_id);
-        bot.getApi().sendMessage(chat_id, my_apps, false, 0, nullptr, "Markdown");
+        bot.getApi().sendMessage(chat_id, my_apps, nullptr, nullptr, nullptr, "Markdown");
         return true;
     }
     if (message->text == "🌐 Проверить возможность подключения")
@@ -45,7 +45,7 @@ bool handle_main_menu_buttons(TgBot::Bot &bot, TgBot::Message::Ptr message)
         db_save_user_state(chat_id, user.state);
 
         auto removal_keyboard = std::make_shared<TgBot::ReplyKeyboardRemove>();
-        bot.getApi().sendMessage(chat_id, "Убираю меню...", false, 0, removal_keyboard, "Markdown", true);
+        bot.getApi().sendMessage(chat_id, "Убираю меню...", nullptr, nullptr, removal_keyboard, "Markdown", true);
         sendBackButtonKeyboard(bot, chat_id, "Пожалуйста, введите ваш полный адрес для проверки (город, улица, дом, корпус, квартира):");
         return true;
     }
@@ -59,7 +59,7 @@ bool handle_main_menu_buttons(TgBot::Bot &bot, TgBot::Message::Ptr message)
         std::string trade_point;
         if (db_is_admin_approved(chat_id, trade_point))
         {
-            bot.getApi().sendMessage(chat_id, "Вы уже являетесь администратором.", false, 0, nullptr, "");
+            bot.getApi().sendMessage(chat_id, "Вы уже являетесь администратором.", nullptr, nullptr, nullptr, "");
         }
         else
         {
@@ -79,7 +79,7 @@ bool handle_main_menu_buttons(TgBot::Bot &bot, TgBot::Message::Ptr message)
         }
         else
         {
-            bot.getApi().sendMessage(chat_id, "У вас нет прав администратора. Если вы хотите стать администратором, нажмите 'РТК'.", false, 0, nullptr, "");
+            bot.getApi().sendMessage(chat_id, "У вас нет прав администратора. Если вы хотите стать администратором, нажмите 'РТК'.", nullptr, nullptr, nullptr, "");
         }
         return true;
     }
@@ -90,7 +90,7 @@ bool handle_main_menu_buttons(TgBot::Bot &bot, TgBot::Message::Ptr message)
            << "👤 *Пользователь:* " << message->from->firstName << " " << message->from->lastName
            << " (ID: `" << chat_id << "`)\n"
            << "Пользователь хочет связаться с сотрудником.";
-        bot.getApi().sendMessage(config.main_admin_id, ss.str(), false, 0, nullptr, "Markdown");
+        bot.getApi().sendMessage(config.main_admin_id, ss.str(), nullptr, nullptr, nullptr, "Markdown");
         bot.getApi().sendMessage(chat_id, "✅ Ваш запрос отправлен! Сотрудник свяжется с вами в ближайшее время.");
         sendPostApplicationMenu(bot, chat_id);
         return true;
@@ -141,7 +141,7 @@ void handle_client_message(TgBot::Bot &bot, TgBot::Message::Ptr message)
                 TgBot::InlineKeyboardMarkup::Ptr speed_keyboard = create_tariff_speed_buttons(user.selected_tariff.id);
                 if (speed_keyboard)
                 {
-                    bot.getApi().sendMessage(chat_id, user.selected_tariff.get_tariff_description() + "\nВыберите желаемую скорость:", false, 0, nullptr, "Markdown", true);
+                    bot.getApi().sendMessage(chat_id, user.selected_tariff.get_tariff_description() + "\nВыберите желаемую скорость:", nullptr, nullptr, nullptr, "Markdown", true);
                     user.state = UserState::VIEWING_TARIFF_DETAILS;
                     db_save_user_state(chat_id, user.state);
                 }
@@ -205,7 +205,7 @@ void handle_client_message(TgBot::Bot &bot, TgBot::Message::Ptr message)
            << "👤 *Пользователь:* " << message->from->firstName << " " << message->from->lastName
            << " (ID: `" << chat_id << "`)\n"
            << "🏠 *Адрес:* " << address;
-        bot.getApi().sendMessage(config.main_admin_id, ss.str(), false, 0, nullptr, "Markdown");
+        bot.getApi().sendMessage(config.main_admin_id, ss.str(), nullptr, nullptr, nullptr, "Markdown");
         bot.getApi().sendMessage(chat_id, "Спасибо! Ваш запрос на проверку адреса отправлен. Администратор свяжется с вами для уточнения деталей.");
         sendMainMenu(bot, chat_id);
         break;
@@ -371,7 +371,7 @@ void handle_client_message(TgBot::Bot &bot, TgBot::Message::Ptr message)
         client_invoice << "Аренда оборудования: *" << rent_details << "*\n"
                        << "*Итого к оплате ежемесячно: " << total_monthly << " ₽*\n\n"
                        << "*Единоразовый платеж за подключение: " << connection_fee << " ₽*";
-        bot.getApi().sendMessage(chat_id, client_invoice.str(), false, 0, nullptr, "Markdown");
+        bot.getApi().sendMessage(chat_id, client_invoice.str(), nullptr, nullptr, nullptr, "Markdown");
 
         std::string full_address = "г. " + user.city + ", ул. " + user.street + ", д. " + user.house;
         if (!user.house_body.empty())
@@ -395,7 +395,7 @@ void handle_client_message(TgBot::Bot &bot, TgBot::Message::Ptr message)
                                     "Для подключения интернета подойдите по адресу:\n*" +
                                     user.office_address + "*\n\n"
                                                           "**Не забудьте взять с собой паспорт!**";
-        bot.getApi().sendMessage(chat_id, final_message, false, 0, nullptr, "Markdown");
+        bot.getApi().sendMessage(chat_id, final_message, nullptr, nullptr, nullptr, "Markdown");
         sendMainMenu(bot, chat_id);
         break;
     }
@@ -460,7 +460,7 @@ void handle_client_callback(TgBot::Bot &bot, TgBot::CallbackQuery::Ptr query)
 
         if (selected_tariff.id.empty())
         {
-            bot.getApi().sendMessage(chat_id, "Ошибка: тариф не найден.", false, 0, nullptr, "");
+            bot.getApi().sendMessage(chat_id, "Ошибка: тариф не найден.", nullptr, nullptr, nullptr, "");
             sendTariffSelection(bot, chat_id);
             return;
         }
@@ -505,7 +505,7 @@ void handle_client_callback(TgBot::Bot &bot, TgBot::CallbackQuery::Ptr query)
 
         if (!found_speed)
         {
-            bot.getApi().sendMessage(chat_id, "Ошибка: выбранная скорость не найдена для тарифа.", false, 0, nullptr, "");
+            bot.getApi().sendMessage(chat_id, "Ошибка: выбранная скорость не найдена для тарифа.", nullptr, nullptr, nullptr, "");
             return;
         }
 
@@ -591,7 +591,7 @@ void handle_client_callback(TgBot::Bot &bot, TgBot::CallbackQuery::Ptr query)
         if (index >= 0 && index < faq_entries.size())
         {
             bot.getApi().answerCallbackQuery(query->id);
-            bot.getApi().sendMessage(chat_id, faq_entries[index].answer, false, 0, nullptr, "Markdown");
+            bot.getApi().sendMessage(chat_id, faq_entries[index].answer, nullptr, nullptr, nullptr, "Markdown");
         }
         else
         {
@@ -665,7 +665,7 @@ void sendMainMenu(TgBot::Bot &bot, int64_t chat_id)
     }
 
     keyboard->resizeKeyboard = true;
-    bot.getApi().sendMessage(chat_id, "Добро пожаловать в главное меню!", false, 0, keyboard);
+    bot.getApi().sendMessage(chat_id, "Добро пожаловать в главное меню!", nullptr, nullptr, keyboard);
     user_session_data[chat_id].state = UserState::NONE;
     db_save_user_state(chat_id, UserState::NONE);
 }
@@ -694,7 +694,7 @@ void sendPostApplicationMenu(TgBot::Bot &bot, int64_t chat_id)
     keyboard->keyboard.push_back(row2);
 
     keyboard->resizeKeyboard = true;
-    bot.getApi().sendMessage(chat_id, "Что вы хотите сделать дальше?", false, 0, keyboard);
+    bot.getApi().sendMessage(chat_id, "Что вы хотите сделать дальше?", nullptr, nullptr, keyboard);
     user_session_data[chat_id].state = UserState::NONE;
     db_save_user_state(chat_id, UserState::NONE);
 }
@@ -704,10 +704,10 @@ void sendTariffSelection(TgBot::Bot &bot, int64_t chat_id)
     user_session_data[chat_id].state = UserState::CHOOSING_TARIFF;
     db_save_user_state(chat_id, user_session_data[chat_id].state);
     auto removal_keyboard = std::make_shared<TgBot::ReplyKeyboardRemove>();
-    bot.getApi().sendMessage(chat_id, "Загружаю тарифы...", false, 0, removal_keyboard);
+    bot.getApi().sendMessage(chat_id, "Загружаю тарифы...", nullptr, nullptr, removal_keyboard);
 
     auto inline_keyboard = create_tariff_main_buttons();
-    bot.getApi().sendMessage(chat_id, "Актуальные тарифы МТС (Москва):", false, 0, inline_keyboard);
+    bot.getApi().sendMessage(chat_id, "Актуальные тарифы МТС (Москва):", nullptr, nullptr, inline_keyboard);
 }
 
 void sendTradePointSelection(TgBot::Bot &bot, int64_t chat_id)
@@ -715,11 +715,11 @@ void sendTradePointSelection(TgBot::Bot &bot, int64_t chat_id)
     user_session_data[chat_id].state = UserState::CHOOSING_FLYER_CODE;
     db_save_user_state(chat_id, user_session_data[chat_id].state);
     auto removal_keyboard = std::make_shared<TgBot::ReplyKeyboardRemove>();
-    bot.getApi().sendMessage(chat_id, "Загружаю список точек...", false, 0, removal_keyboard);
+    bot.getApi().sendMessage(chat_id, "Загружаю список точек...", nullptr, nullptr, removal_keyboard);
     std::vector<std::string> codes = get_all_trade_point_codes();
     if (codes.empty())
     {
-        bot.getApi().sendMessage(chat_id, "В базе нет ни одной торговой точки. Обратитесь к администратору.", false, 0, nullptr, "");
+        bot.getApi().sendMessage(chat_id, "В базе нет ни одной торговой точки. Обратитесь к администратору.", nullptr, nullptr, nullptr, "");
         sendMainMenu(bot, chat_id);
         return;
     }
@@ -737,7 +737,7 @@ void sendTradePointSelection(TgBot::Bot &bot, int64_t chat_id)
             row.clear();
         }
     }
-    bot.getApi().sendMessage(chat_id, "Выберите код вашей торговой точки из списка:", false, 0, keyboard);
+    bot.getApi().sendMessage(chat_id, "Выберите код вашей торговой точки из списка:", nullptr, nullptr, keyboard);
 }
 
 void askForName(TgBot::Bot &bot, int64_t chat_id)
@@ -760,7 +760,7 @@ void askForPhone(TgBot::Bot &bot, int64_t chat_id)
     keyboard->keyboard.push_back({contact_btn});
     keyboard->keyboard.push_back({back_btn});
     keyboard->resizeKeyboard = true;
-    bot.getApi().sendMessage(chat_id, "Спасибо! Теперь введите номер телефона для связи (10 цифр).\nПример: 912 345 67 89", false, 0, keyboard);
+    bot.getApi().sendMessage(chat_id, "Спасибо! Теперь введите номер телефона для связи (10 цифр).\nПример: 912 345 67 89", nullptr, nullptr, keyboard);
 }
 
 void askForMessenger(TgBot::Bot &bot, int64_t chat_id)
@@ -787,8 +787,8 @@ void askForMessenger(TgBot::Bot &bot, int64_t chat_id)
     back_btn->text = "⬅️ Назад";
     back_keyboard->keyboard.push_back({back_btn});
     back_keyboard->resizeKeyboard = true;
-    bot.getApi().sendMessage(chat_id, "Принято! Куда вам будет удобнее написать?", false, 0, back_keyboard);
-    bot.getApi().sendMessage(chat_id, "Выберите мессенджер:", false, 0, messenger_keyboard);
+    bot.getApi().sendMessage(chat_id, "Принято! Куда вам будет удобнее написать?", nullptr, nullptr, back_keyboard);
+    bot.getApi().sendMessage(chat_id, "Выберите мессенджер:", nullptr, nullptr, messenger_keyboard);
 }
 
 void askForEmail(TgBot::Bot &bot, int64_t chat_id)
@@ -800,7 +800,7 @@ void askForEmail(TgBot::Bot &bot, int64_t chat_id)
     btn->text = "⬅️ Назад";
     keyboard->keyboard.push_back({btn});
     keyboard->resizeKeyboard = true;
-    bot.getApi().sendMessage(chat_id, "Отлично! Теперь введите вашу электронную почту:", false, 0, keyboard);
+    bot.getApi().sendMessage(chat_id, "Отлично! Теперь введите вашу электронную почту:", nullptr, nullptr, keyboard);
 }
 
 void askForCity(TgBot::Bot &bot, int64_t chat_id)
@@ -812,7 +812,7 @@ void askForCity(TgBot::Bot &bot, int64_t chat_id)
     btn->text = "⬅️ Назад";
     keyboard->keyboard.push_back({btn});
     keyboard->resizeKeyboard = true;
-    bot.getApi().sendMessage(chat_id, "Теперь начнем ввод адреса. Введите ваш город:", false, 0, keyboard);
+    bot.getApi().sendMessage(chat_id, "Теперь начнем ввод адреса. Введите ваш город:", nullptr, nullptr, keyboard);
 }
 
 void askForStreet(TgBot::Bot &bot, int64_t chat_id)
@@ -824,7 +824,7 @@ void askForStreet(TgBot::Bot &bot, int64_t chat_id)
     btn->text = "⬅️ Назад";
     keyboard->keyboard.push_back({btn});
     keyboard->resizeKeyboard = true;
-    bot.getApi().sendMessage(chat_id, "Принято! Введите улицу:", false, 0, keyboard);
+    bot.getApi().sendMessage(chat_id, "Принято! Введите улицу:", nullptr, nullptr, keyboard);
 }
 
 void askForHouse(TgBot::Bot &bot, int64_t chat_id)
@@ -836,7 +836,7 @@ void askForHouse(TgBot::Bot &bot, int64_t chat_id)
     btn->text = "⬅️ Назад";
     keyboard->keyboard.push_back({btn});
     keyboard->resizeKeyboard = true;
-    bot.getApi().sendMessage(chat_id, "Введите номер дома:", false, 0, keyboard);
+    bot.getApi().sendMessage(chat_id, "Введите номер дома:", nullptr, nullptr, keyboard);
 }
 
 void askForHouseBody(TgBot::Bot &bot, int64_t chat_id)
@@ -853,7 +853,7 @@ void askForHouseBody(TgBot::Bot &bot, int64_t chat_id)
     row.push_back(back_btn);
     keyboard->keyboard.push_back(row);
     keyboard->resizeKeyboard = true;
-    bot.getApi().sendMessage(chat_id, "Введите номер корпуса (если есть):", false, 0, keyboard);
+    bot.getApi().sendMessage(chat_id, "Введите номер корпуса (если есть):", nullptr, nullptr, keyboard);
 }
 
 void askForApartment(TgBot::Bot &bot, int64_t chat_id)
@@ -870,7 +870,7 @@ void askForApartment(TgBot::Bot &bot, int64_t chat_id)
     row.push_back(back_btn);
     keyboard->keyboard.push_back(row);
     keyboard->resizeKeyboard = true;
-    bot.getApi().sendMessage(chat_id, "Введите номер квартиры (если есть):", false, 0, keyboard);
+    bot.getApi().sendMessage(chat_id, "Введите номер квартиры (если есть):", nullptr, nullptr, keyboard);
 }
 
 void sendHelpMenu(TgBot::Bot &bot, int64_t chat_id)
@@ -894,7 +894,7 @@ void sendHelpMenu(TgBot::Bot &bot, int64_t chat_id)
     back_btn->callbackData = "back_to_main_menu";
     keyboard->inlineKeyboard.push_back({back_btn});
 
-    bot.getApi().sendMessage(chat_id, "Чем я могу вам помочь? Выберите вопрос из списка:", false, 0, keyboard);
+    bot.getApi().sendMessage(chat_id, "Чем я могу вам помочь? Выберите вопрос из списка:", nullptr, nullptr, keyboard);
 }
 
 void sendBackButtonKeyboard(TgBot::Bot &bot, int64_t chat_id, const std::string &text)
@@ -904,5 +904,5 @@ void sendBackButtonKeyboard(TgBot::Bot &bot, int64_t chat_id, const std::string 
     back_btn->text = "⬅️ Назад";
     keyboard->keyboard.push_back({back_btn});
     keyboard->resizeKeyboard = true;
-    bot.getApi().sendMessage(chat_id, text, false, 0, keyboard);
+    bot.getApi().sendMessage(chat_id, text, nullptr, nullptr, keyboard);
 }
