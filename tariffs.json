@@ -1,0 +1,170 @@
+[
+    {
+        "connection_fee": "500 ₽",
+        "extra_details": "",
+        "id": "riil",
+        "internet_limit_gb": "",
+        "internet_unlimited": true,
+        "mobile_connection_included": true,
+        "mobile_internet_gb": "50",
+        "mobile_minutes": "50",
+        "mobile_sms": "10",
+        "name": "Тариф 'РИИЛ Плюс'",
+        "router_rental": "149 ₽/мес",
+        "services": [
+            "МТС Секретарь",
+            "Безлимиты на Telegram, ВКонтакте и Rutube",
+            "КИОН",
+            "МТС Музыка",
+            "Бесплатный старт на МТС ЮРЕНТ"
+        ],
+        "speeds": [
+            {
+                "full_price": "",
+                "price": "890",
+                "promo_price_duration_months": "",
+                "unit": "Мбит/с",
+                "value": "500"
+            },
+            {
+                "full_price": "",
+                "price": "1130",
+                "promo_price_duration_months": "",
+                "unit": "Гбит/с",
+                "value": "1"
+            }
+        ],
+        "tv_box_rental": "0",
+        "tv_channels": "",
+        "tv_kion": true
+    },
+    {
+        "connection_fee": "500 ₽",
+        "extra_details": "",
+        "id": "khorosho",
+        "internet_limit_gb": "Не указано",
+        "internet_unlimited": false,
+        "mobile_connection_included": true,
+        "mobile_internet_gb": "30 ГБ на 3 месяца (единоразово при подключении)",
+        "mobile_minutes": "",
+        "mobile_sms": "",
+        "name": "Тариф 'МТС Дома Хорошо'",
+        "router_rental": "149 ₽/мес",
+        "services": [],
+        "speeds": [
+            {
+                "full_price": "",
+                "price": "650",
+                "promo_price_duration_months": "",
+                "unit": "Мбит/с",
+                "value": "200"
+            },
+            {
+                "full_price": "",
+                "price": "750",
+                "promo_price_duration_months": "",
+                "unit": "Мбит/с",
+                "value": "500"
+            },
+            {
+                "full_price": "",
+                "price": "1040",
+                "promo_price_duration_months": "",
+                "unit": "Гбит/с",
+                "value": "1"
+            }
+        ],
+        "tv_box_rental": "0",
+        "tv_channels": "",
+        "tv_kion": true
+    },
+    {
+        "connection_fee": "500 ₽",
+        "extra_details": "",
+        "id": "otlichno",
+        "internet_limit_gb": "",
+        "internet_unlimited": true,
+        "mobile_connection_included": true,
+        "mobile_internet_gb": "Полный безлимит",
+        "mobile_minutes": "900",
+        "mobile_sms": "100",
+        "name": "Тариф 'МТС Дома Отлично'",
+        "router_rental": "149 ₽/мес",
+        "services": [
+            "Онлайн-кинотеатр КИОН",
+            "Страховой полис",
+            "Кубики «Связь при нуле», «VoLTE» и «VoWiFi»",
+            "МТС Секретарь"
+        ],
+        "speeds": [
+            {
+                "full_price": "",
+                "price": "990",
+                "promo_price_duration_months": "",
+                "unit": "Мбит/с",
+                "value": "200"
+            },
+            {
+                "full_price": "",
+                "price": "1040",
+                "promo_price_duration_months": "",
+                "unit": "Мбит/с",
+                "value": "500"
+            },
+            {
+                "full_price": "",
+                "price": "1230",
+                "promo_price_duration_months": "",
+                "unit": "Гбит/с",
+                "value": "1"
+            }
+        ],
+        "tv_box_rental": "149 ₽/мес",
+        "tv_channels": "Да, 200+ каналов",
+        "tv_kion": false
+    },
+    {
+        "connection_fee": "500 ₽",
+        "extra_details": "",
+        "id": "super",
+        "internet_limit_gb": "",
+        "internet_unlimited": true,
+        "mobile_connection_included": true,
+        "mobile_internet_gb": "50",
+        "mobile_minutes": "1200",
+        "mobile_sms": "50",
+        "name": "Тариф 'МТС Дома Супер'",
+        "router_rental": "149 ₽/мес",
+        "services": [
+            "Онлайн-кинотеатр КИОН",
+            "Страховой полис",
+            "Кубик «Мессенджеры» (Безлимитный трафик на WhatsApp, Telegram, Там-Там)",
+            "Кубик «Видео» (Безлимитный трафик на YouTube, Twitch, TikTok, Rutube)",
+            "Кубик «Соцсети» (Безлимитный трафик на ВКонтакте, Одноклассники)",
+            "Кубик «Звонки через Яндекс Станцию»",
+            "Кубик «Связь при нуле»",
+            "Кубик «Безлимит на сервисы МТС»",
+            "Кубик «VoLTE», «VoWiFi»",
+            "МТС Секретарь"
+        ],
+        "speeds": [
+            {
+                "full_price": "",
+                "price": "1200",
+                "promo_price_duration_months": "",
+                "unit": "Мбит/с",
+                "value": "500"
+            },
+            {
+                "full_price": "",
+                "price": "1450",
+                "promo_price_duration_months": "",
+                "unit": "Гбит/с",
+                "value": "1"
+            }
+        ],
+        "tv_box_rental": "149 ₽/мес",
+        "tv_channels": "Да, 200+ каналов",
+        "tv_kion": true
+    }
+]

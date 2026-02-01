@@ -28,8 +28,6 @@ logs/
 # Database
 *.db
 *.db-journal
-tariffs.json
-trade_points.json
 
 
 # OS files
