@@ -92,11 +92,9 @@ void HttpServer::serverLoop()
                                 {"Access-Control-Allow-Headers", "Content-Type, Authorization"}});
 
     // Handle preflight OPTIONS requests
-    g_svr->Options("/(.*)", [](const httplib::Request &, httplib::Response &res)
+    g_svr->Options("/(.*)", [](const httplib::Request &req, httplib::Response &res)
                    {
-                       res.set_header("Access-Control-Allow-Origin", "*");
-                       res.set_header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
-                       res.set_header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+                       LOG(LogLevel::INFO, "OPTIONS " + req.path);
                        res.status = 204;
                    });
 
@@ -206,7 +204,7 @@ void HttpServer::setupRoutes()
                    }
                });
 
-    g_svr->Patch(R"(/api/applications/(\d+)/status)", [](const httplib::Request &req, httplib::Response &res)
+    g_svr->Patch(R"(/api/applications/(\d+)/status)", [this](const httplib::Request &req, httplib::Response &res)
                  {
                      try
                      {
@@ -231,7 +229,31 @@ void HttpServer::setupRoutes()
                              return;
                          }
 
+                         // Update in DB
                          db_update_application_status(app_id, app_status);
+                         LOG(LogLevel::INFO, "API: Updated status for app " + std::to_string(app_id) + " to " + status);
+
+                         // Send notification to user
+                         auto app_opt = db_get_application_by_id(app_id);
+                         if (app_opt)
+                         {
+                             LOG(LogLevel::INFO, "API: Found application " + std::to_string(app_id) + " for user " + std::to_string(app_opt->user_id));
+                             std::string message = "🔔 Статус вашей заявки №" + std::to_string(app_id) + " изменен на: *" + status + "*";
+                             try
+                             {
+                                 bot_.getApi().sendMessage(app_opt->user_id, message, false, 0, nullptr, "Markdown");
+                                 LOG(LogLevel::INFO, "API: Status notification sent to user " + std::to_string(app_opt->user_id));
+                             }
+                             catch (const std::exception &e)
+                             {
+                                 LOG(LogLevel::L_ERROR, "API: Failed to send status notification to user " + std::to_string(app_opt->user_id) + ": " + e.what());
+                             }
+                         }
+                         else
+                         {
+                             LOG(LogLevel::L_ERROR, "API: Application " + std::to_string(app_id) + " not found in DB after update!");
+                         }
+
                          json response = {{"success", true}, {"id", app_id}, {"status", status}};
                          res.set_content(response.dump(), "application/json");
                      }
@@ -366,7 +388,80 @@ void HttpServer::setupRoutes()
                    res.set_content(result.dump(), "application/json");
                });
 
+    g_svr->Post("/api/trade-points", [](const httplib::Request &req, httplib::Response &res)
+                {
+                    try
+                    {
+                        auto body = json::parse(req.body);
+                        TradePoint pt;
+                        pt.code = body.value("code", "");
+                        if (pt.code.empty())
+                            pt.code = body.value("name", "");
+                        pt.name = pt.code;
+                        pt.address = body.value("address", "");
+                        if (pt.code.empty() || pt.address.empty())
+                        {
+                            res.status = 400;
+                            return;
+                        }
+                        update_trade_point(pt);
+                        res.set_content(json({{"success", true}}).dump(), "application/json");
+                    }
+                    catch (...)
+                    {
+                        res.status = 400;
+                    }
+                });
+
+    g_svr->Put(R"(/api/trade-points/(\w+))", [](const httplib::Request &req, httplib::Response &res)
+               {
+                   try
+                   {
+                       std::string code = req.matches[1];
+                       auto body = json::parse(req.body);
+
+                       TradePoint pt;
+                       pt.code = code;
+                       pt.name = body.value("name", "");
+                       pt.address = body.value("address", "");
+
+                       update_trade_point(pt);
+
+                       json response = {{"success", true}, {"code", code}};
+                       res.set_content(response.dump(), "application/json");
+                   }
+                   catch (const std::exception &e)
+                   {
+                       res.status = 400;
+                       res.set_content(json({{"error", e.what()}}).dump(), "application/json");
+                   }
+               });
+
     // ========== TARIFFS ==========
+    g_svr->Post("/api/tariffs/discount", [](const httplib::Request &req, httplib::Response &res)
+                {
+                    try
+                    {
+                        auto body = json::parse(req.body);
+                        double percent = body.value("percent", 0.0);
+                        std::vector<std::string> ids = body.value("tariffIds", std::vector<std::string>());
+
+                        if (percent <= 0 || percent > 100 || ids.empty())
+                        {
+                            res.status = 400;
+                            res.set_content(json({{"error", "Invalid parameters"}}).dump(), "application/json");
+                            return;
+                        }
+
+                        apply_discount_to_tariffs(ids, percent);
+                        res.set_content(json({{"success", true}}).dump(), "application/json");
+                    }
+                    catch (const std::exception &e)
+                    {
+                        res.status = 400;
+                        res.set_content(json({{"error", e.what()}}).dump(), "application/json");
+                    }
+                });
     g_svr->Get("/api/tariffs", [](const httplib::Request &, httplib::Response &res)
                {
                    // Используем глобальный вектор tariff_plans из tariff_manager.h
@@ -382,19 +477,139 @@ void HttpServer::setupRoutes()
                                              {"price", speed_opt.price}});
                        }
 
-                       // Addons не поддерживаются в текущей структуре TariffPlan
-                       json addons = json::array();
-
                        result.push_back({{"id", tariff.id},
                                          {"name", tariff.name},
                                          {"speeds", speeds},
-                                         {"addons", addons},
+                                         {"services", tariff.services},
+                                         {"extraDetails", tariff.extra_details},
                                          {"connectionFee", tariff.connection_fee},
-                                         {"routerRental", tariff.router_rental}});
+                                         {"routerRental", tariff.router_rental},
+                                         {"tvBoxRental", tariff.tv_box_rental},
+                                         {"mobileInternetGb", tariff.mobile_internet_gb},
+                                         {"mobileMinutes", tariff.mobile_minutes},
+                                         {"mobileSms", tariff.mobile_sms},
+                                         {"mobileIncluded", tariff.mobile_connection_included}});
                    }
 
                    res.set_content(result.dump(), "application/json");
                });
+
+    g_svr->Put(R"(/api/tariffs/([\w\-]+))", [](const httplib::Request &req, httplib::Response &res)
+               {
+                   try
+                   {
+                       std::string id = req.matches[1];
+                       auto body = json::parse(req.body);
+
+                       TariffPlan tp = get_tariff_by_id(id);
+                       if (tp.id.empty())
+                       {
+                           tp.id = id;
+                       }
+                       tp.name = body.value("name", tp.name);
+                       tp.connection_fee = body.value("connectionFee", tp.connection_fee);
+                       tp.router_rental = body.value("routerRental", tp.router_rental);
+                       tp.tv_box_rental = body.value("tvBoxRental", tp.tv_box_rental);
+                       tp.extra_details = body.value("extraDetails", tp.extra_details);
+
+                       tp.mobile_connection_included = body.value("mobileIncluded", tp.mobile_connection_included);
+                       tp.mobile_internet_gb = body.value("mobileInternetGb", tp.mobile_internet_gb);
+                       tp.mobile_minutes = body.value("mobileMinutes", tp.mobile_minutes);
+                       tp.mobile_sms = body.value("mobileSms", tp.mobile_sms);
+
+                       if (body.contains("services") && body["services"].is_array())
+                       {
+                           tp.services = body["services"].get<std::vector<std::string>>();
+                       }
+
+                       if (body.contains("speeds") && body["speeds"].is_array())
+                       {
+                           tp.speeds.clear();
+                           for (const auto &s_json : body["speeds"])
+                           {
+                               TariffSpeedOption so;
+                               std::string speed_text = s_json.value("speed", "");
+                               size_t space_pos = speed_text.find(' ');
+                               if (space_pos != std::string::npos)
+                               {
+                                   so.value = speed_text.substr(0, space_pos);
+                                   so.unit = speed_text.substr(space_pos + 1);
+                               }
+                               else
+                               {
+                                   so.value = speed_text;
+                                   so.unit = "Мбит/с";
+                               }
+                               so.price = s_json.value("price", "0");
+                               tp.speeds.push_back(so);
+                           }
+                       }
+
+                       update_tariff_plan(tp);
+
+                       json response = {{"success", true}, {"id", id}};
+                       res.set_content(response.dump(), "application/json");
+                   }
+                   catch (const std::exception &e)
+                   {
+                       res.status = 400;
+                       res.set_content(json({{"error", e.what()}}).dump(), "application/json");
+                   }
+               });
+
+    g_svr->Post("/api/tariffs", [this](const httplib::Request &req, httplib::Response &res)
+                {
+                    try
+                    {
+                        auto body = json::parse(req.body);
+                        TariffPlan tp;
+                        tp.id = body.value("id", "new-tariff-" + std::to_string(time(0)));
+                        tp.name = body.value("name", "Новый тариф");
+                        tp.connection_fee = body.value("connectionFee", "0");
+                        tp.router_rental = body.value("routerRental", "0");
+                        tp.tv_box_rental = body.value("tvBoxRental", "0");
+                        tp.extra_details = body.value("extraDetails", "");
+                        tp.mobile_connection_included = body.value("mobileIncluded", false);
+                        tp.mobile_internet_gb = body.value("mobileInternetGb", "0");
+                        tp.mobile_minutes = body.value("mobileMinutes", "0");
+                        tp.mobile_sms = body.value("mobileSms", "0");
+
+                        if (body.contains("services") && body["services"].is_array())
+                        {
+                            tp.services = body["services"].get<std::vector<std::string>>();
+                        }
+
+                        if (body.contains("speeds") && body["speeds"].is_array())
+                        {
+                            for (const auto &s_json : body["speeds"])
+                            {
+                                TariffSpeedOption so;
+                                std::string speed_text = s_json.value("speed", "");
+                                size_t space_pos = speed_text.find(' ');
+                                if (space_pos != std::string::npos)
+                                {
+                                    so.value = speed_text.substr(0, space_pos);
+                                    so.unit = speed_text.substr(space_pos + 1);
+                                }
+                                else
+                                {
+                                    so.value = speed_text;
+                                    so.unit = "Мбит/с";
+                                }
+                                so.price = s_json.value("price", "0");
+                                tp.speeds.push_back(so);
+                            }
+                        }
+
+                        update_tariff_plan(tp);
+                        res.set_content(json({{"success", true}, {"id", tp.id}}).dump(), "application/json");
+                    }
+                    catch (const std::exception &e)
+                    {
+                        res.status = 400;
+                        res.set_content(json({{"error", e.what()}}).dump(), "application/json");
+                    }
+                });
 
     // ========== BROADCAST ==========
     g_svr->Post("/api/broadcast", [this](const httplib::Request &req, httplib::Response &res)
@@ -424,6 +639,111 @@ void HttpServer::setupRoutes()
                         res.status = 400;
                         json response = {{"error", e.what()}};
                         res.set_content(response.dump(), "application/json");
+                    }
+                });
+
+    // ========== DIRECT MESSAGES ==========
+    g_svr->Get(R"(/api/messages/(\d+))", [](const httplib::Request &req, httplib::Response &res)
+               {
+                   try
+                   {
+                       long long app_id = std::stoll(req.matches[1]);
+                       LOG(LogLevel::INFO, "API: Getting chat history for app ID " + std::to_string(app_id));
+                       auto history = db_get_chat_history(app_id);
+                       LOG(LogLevel::INFO, "API: db_get_chat_history returned " + std::to_string(history.size()) + " messages");
+                       json result = json::array();
+                       for (const auto &msg : history)
+                       {
+                           result.push_back({{"sender", msg.sender},
+                                             {"text", msg.text},
+                                             {"timestamp", msg.timestamp}});
+                       }
+                       res.set_content(result.dump(), "application/json");
+                   }
+                   catch (const std::exception &e)
+                   {
+                       LOG(LogLevel::L_ERROR, "API: Failed to get chat history: " + std::string(e.what()));
+                       res.status = 400;
+                       res.set_content(json({{"error", e.what()}}).dump(), "application/json");
+                   }
+               });
+
+    g_svr->Post(R"(/api/messages/(\d+))", [this](const httplib::Request &req, httplib::Response &res)
+                {
+                    try
+                    {
+                        long long app_id = std::stoll(req.matches[1]);
+                        auto body = json::parse(req.body);
+                        int64_t userId = body.value("userId", (int64_t)0);
+                        std::string message = body.value("text", "");
+
+                        LOG(LogLevel::INFO, "API: Admin sending message to app ID " + std::to_string(app_id) + " (User " + std::to_string(userId) + ")");
+
+                        if (userId == 0 || message.empty())
+                        {
+                            res.status = 400;
+                            res.set_content(json({{"error", "userId and text are required"}}).dump(), "application/json");
+                            return;
+                        }
+
+                        // Send via Telegram asynchronously to avoid blocking the API response
+                        std::thread([this, userId, message, app_id]()
+                                    {
+                                        try
+                                        {
+                                            bot_.getApi().sendMessage(userId, message);
+                                            LOG(LogLevel::INFO, "Telegram message sent to user " + std::to_string(userId));
+                                        }
+                                        catch (const std::exception &e)
+                                        {
+                                            LOG(LogLevel::L_ERROR, "Failed to send Telegram message to user " + std::to_string(userId) + ": " + e.what());
+                                        }
+                                    })
+                            .detach();
+
+                        // Save to history
+                        ChatMessage msg;
+                        msg.sender = "admin";
+                        msg.text = message;
+                        db_add_chat_message(app_id, msg);
+
+                        LOG(LogLevel::INFO, "Admin sent message to user " + std::to_string(userId) + " and saved to chat " + std::to_string(app_id));
+
+                        res.set_content(json({{"success", true}}).dump(), "application/json");
+                    }
+                    catch (const std::exception &e)
+                    {
+                        LOG(LogLevel::L_ERROR, "API: Failed to send message: " + std::string(e.what()));
+                        res.status = 500;
+                        res.set_content(json({{"error", e.what()}}).dump(), "application/json");
+                    }
+                });
+
+    // Резервный эндпоинт для старого API (без app_id)
+    g_svr->Post("/api/messages", [this](const httplib::Request &req, httplib::Response &res)
+                {
+                    try
+                    {
+                        auto body = json::parse(req.body);
+                        int64_t userId = body.value("userId", (int64_t)0);
+                        std::string message = body.value("text", "");
+
+                        if (userId == 0 || message.empty())
+                        {
+                            res.status = 400;
+                            res.set_content(json({{"error", "userId and text are required"}}).dump(), "application/json");
+                            return;
+                        }
+
+                        bot_.getApi().sendMessage(userId, message);
+                        LOG(LogLevel::INFO, "Admin sent legacy message to user " + std::to_string(userId));
+
+                        res.set_content(json({{"success", true}}).dump(), "application/json");
+                    }
+                    catch (const std::exception &e)
+                    {
+                        res.status = 500;
+                        res.set_content(json({{"error", e.what()}}).dump(), "application/json");
                     }
                 });
 

@@ -115,6 +115,20 @@ void handle_client_message(TgBot::Bot &bot, TgBot::Message::Ptr message)
         return;
     }
 
+    // Сохранение сообщения в историю чата, если есть активная заявка
+    if (!message->text.empty() && message->text[0] != '/')
+    {
+        int64_t app_id = db_get_latest_application_id(chat_id);
+        if (app_id > 0)
+        {
+            ChatMessage msg;
+            msg.sender = "client";
+            msg.text = message->text;
+            db_add_chat_message(app_id, msg);
+            LOG(LogLevel::INFO, "Client message saved to chat history for application " + std::to_string(app_id));
+        }
+    }
+
     if (message->text == "⬅️ Назад")
     {
         switch (user.state)

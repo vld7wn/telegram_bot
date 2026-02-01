@@ -56,8 +56,39 @@ std::vector<TradePoint> get_all_trade_points()
     for (const auto &point : trade_points_data)
     {
         points.push_back({point.at("code").get<std::string>(),
-                          point.value("name", ""), // Используем value для безопасности
+                          point.value("name", ""),
                           point.at("address").get<std::string>()});
     }
     return points;
+}
+
+void save_trade_points(const std::string &path)
+{
+    std::ofstream f(path);
+    if (!f.is_open())
+    {
+        throw std::runtime_error("Could not open trade_points.json for writing: " + path);
+    }
+    f << trade_points_data.dump(4);
+    LOG(LogLevel::INFO, "Trade points saved successfully to " << path);
+}
+
+void update_trade_point(const TradePoint &point)
+{
+    bool found = false;
+    for (auto &tp : trade_points_data)
+    {
+        if (tp["code"] == point.code)
+        {
+            tp["name"] = point.name;
+            tp["address"] = point.address;
+            found = true;
+            break;
+        }
+    }
+    if (!found)
+    {
+        trade_points_data.push_back({{"code", point.code}, {"name", point.name}, {"address", point.address}});
+    }
+    save_trade_points();
 }

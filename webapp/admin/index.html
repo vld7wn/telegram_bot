@@ -53,8 +53,8 @@
                 </button>
                 <h1 class="main-title">Telegram Бот: Управление</h1>
                 <div class="header-time">
-                    <span class="time" id="currentTime">14:35</span>
-                    <span class="date" id="currentDate">29 Марта 2024</span>
+                    <span class="time" id="currentTime">--:--</span>
+                    <span class="date" id="currentDate">Загрузка...</span>
                 </div>
             </header>
 
@@ -65,28 +65,28 @@
                     <div class="stat-item">
                         <div class="stat-icon-wrap purple">📝</div>
                         <div class="stat-content">
-                            <span class="stat-number" id="statTotal">156</span>
+                            <span class="stat-number" id="statTotal">0</span>
                             <span class="stat-label">Всего заявок</span>
                         </div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-icon-wrap cyan">🆕</div>
                         <div class="stat-content">
-                            <span class="stat-number" id="statNew">12</span>
+                            <span class="stat-number" id="statNew">0</span>
                             <span class="stat-label">Новые сегодня</span>
                         </div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-icon-wrap orange">⏳</div>
                         <div class="stat-content">
-                            <span class="stat-number" id="statInProgress">8</span>
+                            <span class="stat-number" id="statInProgress">0</span>
                             <span class="stat-label">В работе</span>
                         </div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-icon-wrap green">✅</div>
                         <div class="stat-content">
-                            <span class="stat-number" id="statCompleted">136</span>
+                            <span class="stat-number" id="statCompleted">0</span>
                             <span class="stat-label">Завершено</span>
                         </div>
                     </div>
@@ -218,7 +218,12 @@
                 <div class="glass-panel">
                     <div class="panel-header">
                         <h3 class="panel-title">Тарифные планы</h3>
-                        <button class="btn btn-primary btn-sm" onclick="showAddTariffModal()">➕ Добавить</button>
+                        <div class="panel-actions" style="display: flex; gap: 8px;">
+                            <button class="btn btn-secondary btn-sm"
+                                onclick="if(window.showDiscountModal) window.showDiscountModal(); else alert('Ошибка: функция не загружена. Обновите страницу.')">%
+                                Скидка</button>
+                            <button class="btn btn-primary btn-sm" onclick="showAddTariffModal()">➕ Добавить</button>
+                        </div>
                     </div>
                     <div class="tariffs-list" id="tariffsList"></div>
                 </div>
@@ -275,26 +280,26 @@
         </div>
     </div>
 
-    <!-- Add Trade Point Modal -->
-    <div class="modal" id="addTradePointModal">
+    <!-- Trade Point Modal (Add/Edit) -->
+    <div class="modal" id="tradePointModal">
         <div class="modal-content glass-panel">
             <div class="modal-header">
-                <h3>Добавить торговую точку</h3>
-                <button class="modal-close" onclick="closeModal('addTradePointModal')">&times;</button>
+                <h3 id="tradePointModalTitle">Торговая точка</h3>
+                <button class="modal-close" onclick="closeModal('tradePointModal')">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
                     <label>Код</label>
-                    <input type="text" id="newTradePointCode" class="form-input" placeholder="Например: A123">
+                    <input type="text" id="tradePointCode" class="form-input" placeholder="Например: A123">
                 </div>
                 <div class="form-group">
                     <label>Адрес</label>
-                    <input type="text" id="newTradePointAddress" class="form-input" placeholder="Полный адрес">
+                    <input type="text" id="tradePointAddress" class="form-input" placeholder="Полный адрес">
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('addTradePointModal')">Отмена</button>
-                <button class="btn btn-primary" onclick="addTradePoint()">Добавить</button>
+                <button class="btn btn-secondary" onclick="closeModal('tradePointModal')">Отмена</button>
+                <button class="btn btn-primary" onclick="saveTradePoint()">Сохранить</button>
             </div>
         </div>
     </div>
@@ -306,16 +311,147 @@
                 <h3>Заявка #<span id="modalAppId"></span></h3>
                 <button class="modal-close" onclick="closeModal('applicationModal')">&times;</button>
             </div>
-            <div class="modal-body" id="applicationDetails"></div>
+            <div class="modal-body">
+                <div id="applicationDetails"></div>
+            </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('applicationModal')">Закрыть</button>
-                <button class="btn btn-primary">💬 Написать</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Modal -->
+    <div class="modal" id="chatModal">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h3>Чат по заявке #<span id="chatAppId"></span></h3>
+                <button class="modal-close" onclick="closeModal('chatModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="chat-admin-selector" style="margin-bottom: 12px;">
+                    <label style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; display: block;">От
+                        имени:</label>
+                    <select id="chatAdminSelect" class="form-input" style="padding: 6px 12px; height: auto;"></select>
+                </div>
+                <div class="chat-section">
+                    <div id="chatHistory" class="chat-history">
+                        <div class="chat-empty">Загрузка сообщений...</div>
+                    </div>
+                    <div class="chat-input-container">
+                        <textarea id="chatInput" class="chat-input"
+                            placeholder="Введите сообщение клиенту..."></textarea>
+                        <button class="btn btn-primary btn-send" onclick="sendChatMessage()">🚀</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('chatModal')">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Tariff Modal (Add/Edit) -->
+    <div class="modal" id="tariffModal">
+        <div class="modal-content glass-panel modal-large">
+            <div class="modal-header">
+                <h3 id="tariffModalTitle">Тарифный план</h3>
+                <button class="modal-close" onclick="closeModal('tariffModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editTariffId">
+                <div class="form-group">
+                    <label>Название тарифа</label>
+                    <input type="text" id="editTariffTitle" class="form-input" placeholder="Например: Супер 100">
+                </div>
+                <div class="modal-section-title">Домашний интернет</div>
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label>Плата за подкл.</label>
+                        <input type="text" id="editTariffConnFee" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Аренда роутера</label>
+                        <input type="text" id="editTariffRouter" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Аренда ТВ-приставки</label>
+                        <input type="text" id="editTariffTvBox" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Доп. поле (интернет)</label>
+                        <input type="text" id="editTariffExtra" class="form-input">
+                    </div>
+                </div>
+                <div id="tariffSpeedsContainer"></div>
+                <button class="btn btn-secondary btn-sm" onclick="addSpeedRow()">➕ Добавить скорость</button>
+
+                <div class="modal-section-title">Мобильная связь</div>
+                <div class="form-group">
+                    <div class="labeled-toggle">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="editTariffMobileIncluded">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <label for="editTariffMobileIncluded" class="toggle-label">Включена в тариф</label>
+                    </div>
+                </div>
+                <div class="form-grid-3">
+                    <div class="form-group">
+                        <label>Гигабайты</label>
+                        <input type="text" id="editTariffMobileGb" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Минуты</label>
+                        <input type="text" id="editTariffMobileMin" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>SMS</label>
+                        <input type="text" id="editTariffMobileSms" class="form-input">
+                    </div>
+                </div>
+
+                <div class="modal-section-title">Услуги</div>
+                <div id="tariffServicesContainer"></div>
+                <button class="btn btn-secondary btn-sm" onclick="addServiceRow()">➕ Добавить услугу</button>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('tariffModal')">Отмена</button>
+                <button class="btn btn-primary" onclick="saveTariff()">💾 Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Discount Modal -->
+    <div class="modal-overlay" id="discountModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Массовая скидка</h3>
+                <button class="modal-close" onclick="closeModal('discountModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Размер скидки (%)</label>
+                    <input type="number" id="discountPercent" class="form-input" placeholder="Например: 10" min="1"
+                        max="100">
+                </div>
+                <div class="form-group">
+                    <label>Выберите тарифы:</label>
+                    <div id="discountTariffList"
+                        style="max-height: 300px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; background: rgba(255,255,255,0.05);">
+                        <!-- Тарифы с чекбоксами будут здесь -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="closeModal('discountModal')">Отмена</button>
+                    <button class="btn btn-primary" onclick="applyDiscount()">Применить скидку</button>
+                </div>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="js/admin.js"></script>
+    <script src="js/admin.js?v=1.0.3"></script>
 </body>
 
 </html>

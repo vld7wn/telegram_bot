@@ -1,7 +1,11 @@
 // ========== ADMIN PANEL JAVASCRIPT ==========
 
-// API Configuration - использует Render.com для production
-const API_BASE = 'https://telegram-bot-lqlw.onrender.com/api';
+// API Configuration
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:8080/api'
+    : 'https://telegram-bot-lqlw.onrender.com/api';
+
+console.log('[Admin Panel] Using API:', API_BASE);
 
 // State
 let currentPage = 'dashboard';
@@ -10,15 +14,46 @@ let admins = [];
 let pendingRequests = [];
 let tradePoints = [];
 let tariffs = [];
+const cacheVersion = '1.0.2';
+
+let chatInterval = null;
+let currentAppId = null;
+let currentUserId = null;
 let botActive = true;
 
 // ========== INITIALIZATION ==========
+// ========== INITIALIZATION ==========
 document.addEventListener('DOMContentLoaded', () => {
-    initNavigation();
-    updateTime();
-    setInterval(updateTime, 1000);
-    loadAllData();
+    console.log('DOM Content Loaded');
+    try {
+        // Очистка демо-данных перед загрузкой
+        document.querySelectorAll('.stat-number').forEach(el => el.textContent = '0');
+
+        initNavigation();
+        updateTime();
+        setInterval(updateTime, 1000);
+        loadAllData();
+
+        // Обработка Enter в чате
+        const chatInput = document.getElementById('chatInput');
+        if (chatInput) {
+            chatInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendChatMessage();
+                }
+            });
+        }
+    } catch (e) {
+        console.error('Initialization Error:', e);
+        alert('Ошибка инициализации скрипта: ' + e.message);
+    }
 });
+
+// Expose functions to global scope for HTML access
+window.showDiscountModal = showDiscountModal;
+window.applyDiscount = applyDiscount; // Ensure this is defined before usage if hoisting works, otherwise move this to bottom
+
 
 function initNavigation() {
     const navItems = document.querySelectorAll('.nav-item');
@@ -71,7 +106,12 @@ function showPage(pageName) {
         'tariffs': 'Тарифы',
         'settings': 'Настройки'
     };
-    document.getElementById('pageTitle').textContent = titles[pageName] || pageName;
+    const pageTitleEl = document.getElementById('pageTitle');
+    if (pageTitleEl) pageTitleEl.textContent = titles[pageName] || pageName;
+    else {
+        const mainTitle = document.querySelector('.main-title');
+        if (mainTitle) mainTitle.textContent = titles[pageName] || pageName;
+    }
 
     currentPage = pageName;
 }
@@ -236,8 +276,8 @@ function renderApplicationsTable() {
             <td>${app.date || '-'}</td>
             <td>
                 <div class="action-buttons">
-                    <button class="btn-view" onclick="viewApplication(${app.id})">👁</button>
-                    <button class="btn-message" onclick="openMessageModal(${app.userId})">💬</button>
+                    <button class="btn-view" onclick="viewApplication(${app.id})" title="Просмотр">👁</button>
+                    <button class="btn-message" onclick="openChat(${app.id})" title="Чат">💬</button>
                 </div>
             </td>
         </tr>
@@ -333,7 +373,7 @@ function renderTariffs() {
     }
 
     container.innerHTML = tariffs.map(t => {
-        const speedsText = (t.speeds || []).map(s => `${s.value} ${s.unit || 'Мбит/с'}`).join(', ');
+        const speedsText = (t.speeds || []).map(s => s.speed).join(', ');
         const priceText = (t.speeds && t.speeds[0]) ? `${t.speeds[0].price} ₽` : '-';
 
         return `
@@ -447,16 +487,20 @@ function updateBotStatusUI() {
         statusDot?.classList.add('active');
         if (statusText) statusText.textContent = 'Бот активен';
         if (toggleBtn) {
-            toggleBtn.querySelector('.action-icon').textContent = '🔴';
-            toggleBtn.querySelector('span:last-child').textContent = 'Выключить бота';
+            const icon = toggleBtn.querySelector('.qa-icon') || toggleBtn.querySelector('.action-icon');
+            const text = toggleBtn.querySelector('.qa-text') || toggleBtn.querySelector('span:last-child');
+            if (icon) icon.textContent = '🔴';
+            if (text) text.textContent = 'Выключить бота';
         }
         if (toggleSwitch) toggleSwitch.checked = true;
     } else {
         statusDot?.classList.remove('active');
         if (statusText) statusText.textContent = 'Бот отключен';
         if (toggleBtn) {
-            toggleBtn.querySelector('.action-icon').textContent = '🟢';
-            toggleBtn.querySelector('span:last-child').textContent = 'Включить бота';
+            const icon = toggleBtn.querySelector('.qa-icon') || toggleBtn.querySelector('.action-icon');
+            const text = toggleBtn.querySelector('.qa-text') || toggleBtn.querySelector('span:last-child');
+            if (icon) icon.textContent = '🟢';
+            if (text) text.textContent = 'Включить бота';
         }
         if (toggleSwitch) toggleSwitch.checked = false;
     }
@@ -484,6 +528,14 @@ function showModal(modalId) {
 
 function closeModal(modalId) {
     document.getElementById(modalId).classList.remove('active');
+    if (modalId === 'chatModal') {
+        if (chatInterval) {
+            clearInterval(chatInterval);
+            chatInterval = null;
+        }
+        currentAppId = null;
+        currentUserId = null;
+    }
 }
 
 function showAddAdminModal() {
@@ -534,6 +586,164 @@ function viewApplication(appId) {
     `;
 
     showModal('applicationModal');
+}
+
+function openChat(appId) {
+    const app = applications.find(a => a.id === appId);
+    if (!app) return;
+
+    currentAppId = app.id;
+    currentUserId = app.userId;
+
+    document.getElementById('chatAppId').textContent = app.id;
+    document.getElementById('chatHistory').innerHTML = '<div class="chat-empty">Загрузка сообщений...</div>';
+    document.getElementById('chatInput').value = '';
+
+    loadChatHistory(app.id);
+
+    // Заполняем список администраторов для подписи
+    const adminSelect = document.getElementById('chatAdminSelect');
+    if (adminSelect) {
+        adminSelect.innerHTML = '<option value="">Без подписи</option>' +
+            admins.map(adm => {
+                const id = adm.userId || adm.user_id;
+                const name = adm.name || 'Admin';
+                const tp = adm.tradePoint || adm.trade_point || '-';
+                return `<option value="${id}" data-name="${name}" data-tp="${tp}">${name} (${tp})</option>`;
+            }).join('');
+
+        // Загружаем сохраненный выбор
+        const savedAdminId = localStorage.getItem('preferredAdminId');
+        if (savedAdminId) adminSelect.value = savedAdminId;
+
+        // Сохраняем при изменении
+        adminSelect.onchange = () => localStorage.setItem('preferredAdminId', adminSelect.value);
+    }
+
+    if (chatInterval) clearInterval(chatInterval);
+    chatInterval = setInterval(() => loadChatHistory(app.id), 300);
+
+    showModal('chatModal');
+}
+
+// ========== CHAT LOGIC ==========
+async function loadChatHistory(appId) {
+    console.log(`[Chat] Loading history for app ${appId}...`);
+    try {
+        const response = await fetch(`${API_BASE}/messages/${appId}`);
+        if (response.ok) {
+            const history = await response.json();
+            console.log(`[Chat] Received ${history.length} messages`);
+            renderChat(history);
+        } else {
+            console.error(`[Chat] Failed to load history: ${response.status}`);
+            const container = document.getElementById('chatHistory');
+            if (container.querySelector('.chat-empty')) {
+                container.innerHTML = `<div class="chat-empty" style="color: #ff4d4d;">Ошибка загрузки сообщений (Status: ${response.status}). Проверьте логи сервера.</div>`;
+            }
+        }
+    } catch (error) {
+        console.error('[Chat] Error loading chat history:', error);
+        const container = document.getElementById('chatHistory');
+        if (container.querySelector('.chat-empty')) {
+            container.innerHTML = '<div class="chat-empty" style="color: #ff4d4d;">Ошибка подключения к API.</div>';
+        }
+    }
+}
+
+function renderChat(history) {
+    const container = document.getElementById('chatHistory');
+    if (!history || history.length === 0) {
+        container.innerHTML = '<div class="chat-empty">История переписки пуста. Напишите клиенту первым!</div>';
+        return;
+    }
+
+    try {
+        const html = history.map(msg => {
+            // Безопасный парсинг времени
+            let timeStr = '--:--';
+            try {
+                if (msg.timestamp) {
+                    // SQLite возвращает "YYYY-MM-DD HH:MM:SS" в UTC
+                    // Чтобы JS корректно понял, можно заменить пробел на T
+                    const dateObj = new Date(msg.timestamp.replace(' ', 'T'));
+                    if (!isNaN(dateObj.getTime())) {
+                        timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    } else {
+                        // Если парсинг не удался, пробуем вывести как есть
+                        timeStr = msg.timestamp.split(' ')[1] || msg.timestamp;
+                    }
+                }
+            } catch (e) {
+                console.warn('[Chat] Date parse error:', e, msg.timestamp);
+            }
+
+            return `
+                <div class="chat-msg ${msg.sender}">
+                    ${(msg.text || '').replace(/\n/g, '<br>')}
+                    <span class="chat-msg-time">${timeStr}</span>
+                </div>
+            `;
+        }).join('');
+
+        // Сохраняем позицию скролла
+        const isAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
+
+        container.innerHTML = html;
+
+        // Прокручиваем вниз, если были внизу или это первая загрузка
+        if (isAtBottom) {
+            container.scrollTop = container.scrollHeight;
+        }
+    } catch (error) {
+        console.error('[Chat] Render error:', error);
+        container.innerHTML = `<div class="chat-empty" style="color: #ff4d4d;">Ошибка отображения чата: ${error.message}</div>`;
+    }
+}
+
+async function sendChatMessage() {
+    const input = document.getElementById('chatInput');
+    const text = input.value.trim();
+
+    if (!text || !currentAppId || !currentUserId) return;
+
+    const btn = document.querySelector('.btn-send');
+    btn.disabled = true;
+
+    try {
+        let finalContext = text;
+        const adminSelect = document.getElementById('chatAdminSelect');
+        if (adminSelect && adminSelect.value) {
+            const opt = adminSelect.options[adminSelect.selectedIndex];
+            const name = opt.dataset.name;
+            const tp = opt.dataset.tp;
+            finalContext = `Сотрудник\n${name} ${tp}\n-----------------\n${text}`;
+        }
+
+        const response = await fetch(`${API_BASE}/messages/${currentAppId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                userId: currentUserId,
+                text: finalContext
+            })
+        });
+
+        if (response.ok) {
+            input.value = '';
+            await loadChatHistory(currentAppId);
+            const container = document.getElementById('chatHistory');
+            container.scrollTop = container.scrollHeight;
+        } else {
+            alert('Ошибка при отправке сообщения');
+        }
+    } catch (error) {
+        console.error('Error sending message:', error);
+        alert('Ошибка подключения');
+    } finally {
+        btn.disabled = false;
+        input.focus();
+    }
 }
 
 // ========== ADMIN ACTIONS ==========
@@ -603,42 +813,56 @@ async function declineAdmin(userId) {
 // ========== APPLICATION ACTIONS ==========
 async function updateApplicationStatus(appId, newStatus) {
     const app = applications.find(a => a.id === appId);
-    if (app) {
-        app.status = newStatus;
+    if (!app) return;
 
-        try {
-            await fetch(`${API_BASE}/applications/${appId}/status`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: newStatus })
-            });
-        } catch (error) {
-            console.error('Error updating status:', error);
+    console.log(`[Status] Updating app ${appId} to ${newStatus}...`);
+    try {
+        const response = await fetch(`${API_BASE}/applications/${appId}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus })
+        });
+        if (response.ok) {
+            console.log(`[Status] App ${appId} updated successfully`);
+            app.status = newStatus;
+            renderApplicationsTable();
+            renderRecentApplications();
+            updateDashboard();
+        } else {
+            console.error(`[Status] Failed to update: ${response.status}`);
+            const error = await response.json();
+            alert(`Ошибка обновления статуса: ${error.error || response.statusText}`);
         }
-
-        renderApplicationsTable();
-        renderRecentApplications();
-        updateDashboard();
+    } catch (error) {
+        console.error('[Status] Network error:', error);
+        alert('Ошибка подключения при обновлении статуса');
     }
-}
-
-function openMessageModal(userId) {
-    alert(`Отправка сообщения пользователю ${userId}`);
-}
-
-function sendMessageToClient() {
-    alert('Функция отправки сообщения будет реализована');
-    closeModal('applicationModal');
 }
 
 // ========== TRADE POINTS ACTIONS ==========
 function showAddTradePointModal() {
-    showModal('addTradePointModal');
+    document.getElementById('tradePointModalTitle').textContent = 'Добавить торговую точку';
+    document.getElementById('tradePointCode').value = '';
+    document.getElementById('tradePointAddress').value = '';
+    document.getElementById('tradePointCode').disabled = false;
+    showModal('tradePointModal');
 }
 
-async function addTradePoint() {
-    const code = document.getElementById('newTradePointCode')?.value;
-    const address = document.getElementById('newTradePointAddress')?.value;
+async function editTradePoint(code) {
+    const tp = tradePoints.find(t => t.code === code);
+    if (!tp) return;
+
+    document.getElementById('tradePointModalTitle').textContent = 'Редактировать точку';
+    document.getElementById('tradePointCode').value = tp.code;
+    document.getElementById('tradePointAddress').value = tp.address || '';
+    document.getElementById('tradePointCode').disabled = true;
+    showModal('tradePointModal');
+}
+
+async function saveTradePoint() {
+    const code = document.getElementById('tradePointCode').value;
+    const address = document.getElementById('tradePointAddress').value;
+    const isEdit = document.getElementById('tradePointCode').disabled;
 
     if (!code || !address) {
         alert('Заполните все поля');
@@ -646,33 +870,26 @@ async function addTradePoint() {
     }
 
     try {
-        const response = await fetch(`${API_BASE}/trade-points`, {
-            method: 'POST',
+        const method = isEdit ? 'PUT' : 'POST';
+        const url = isEdit ? `${API_BASE}/trade-points/${code}` : `${API_BASE}/trade-points`;
+
+        const response = await fetch(url, {
+            method: method,
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code, address })
+            body: JSON.stringify({ name: code, address: address })
         });
 
         if (response.ok) {
             await loadTradePoints();
             renderTradePoints();
-            closeModal('addTradePointModal');
+            populateTradePointSelects();
+            closeModal('tradePointModal');
         } else {
-            alert('Ошибка при добавлении торговой точки');
+            const err = await response.json();
+            alert('Ошибка при сохранении: ' + (err.error || 'неизвестная ошибка'));
         }
     } catch (error) {
-        console.error('Error adding trade point:', error);
-        alert('Ошибка подключения к API');
-    }
-}
-
-function editTradePoint(code) {
-    const tp = tradePoints.find(t => t.code === code);
-    if (!tp) return;
-
-    const newAddress = prompt('Введите новый адрес:', tp.address);
-    if (newAddress && newAddress !== tp.address) {
-        // TODO: Implement API call to update trade point
-        alert('Редактирование торговых точек будет реализовано в API');
+        console.error('Error saving trade point:', error);
     }
 }
 
@@ -695,14 +912,165 @@ async function deleteTradePoint(code) {
 
 // ========== TARIFFS ACTIONS ==========
 function showAddTariffModal() {
-    alert('Добавление тарифов будет реализовано');
+    document.getElementById('editTariffId').value = '';
+    document.getElementById('tariffModalTitle').textContent = 'Добавить тариф';
+    document.getElementById('editTariffTitle').value = '';
+    document.getElementById('editTariffConnFee').value = '0';
+    document.getElementById('editTariffRouter').value = '0';
+    document.getElementById('editTariffTvBox').value = '0';
+    document.getElementById('editTariffExtra').value = '';
+    document.getElementById('editTariffMobileIncluded').checked = false;
+    document.getElementById('editTariffMobileGb').value = '';
+    document.getElementById('editTariffMobileMin').value = '';
+    document.getElementById('editTariffMobileSms').value = '';
+
+    document.getElementById('tariffSpeedsContainer').innerHTML = '';
+    document.getElementById('tariffServicesContainer').innerHTML = '';
+
+    addSpeedRow();
+    showModal('tariffModal');
 }
 
-function editTariff(tariffId) {
-    const tariff = tariffs.find(t => t.id === tariffId);
-    if (!tariff) return;
+function addSpeedRow(value = '', unit = 'Мбит/с', price = '') {
+    const container = document.getElementById('tariffSpeedsContainer');
+    const div = document.createElement('div');
+    div.className = 'speed-row';
+    div.innerHTML = `
+        <div class="form-group" style="flex: 2;">
+            <label>Скорость</label>
+            <div style="display: flex; gap: 5px;">
+                <input type="text" class="form-input speed-val" value="${value}" style="flex: 1;">
+                <select class="form-input speed-unit" style="flex: 0 0 100px; padding: 10px 5px;">
+                    <option value="Мбит/с" ${unit === 'Мбит/с' ? 'selected' : ''}>Мбит/с</option>
+                    <option value="Гбит/с" ${unit === 'Гбит/с' ? 'selected' : ''}>Гбит/с</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group" style="flex: 1;">
+            <label>Цена (₽)</label>
+            <input type="text" class="form-input speed-price" value="${price}">
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="this.parentElement.remove()" style="margin-bottom: 0;">🗑</button>
+    `;
+    container.appendChild(div);
+}
 
-    alert(`Редактирование тарифа "${tariff.name}" будет реализовано`);
+function addServiceRow(text = '') {
+    const container = document.getElementById('tariffServicesContainer');
+    const div = document.createElement('div');
+    div.className = 'service-row';
+    div.innerHTML = `
+        <div class="form-group">
+            <input type="text" class="form-input service-text" value="${text}" placeholder="Название услуги">
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">🗑</button>
+    `;
+    container.appendChild(div);
+}
+
+async function editTariff(id) {
+    const t = tariffs.find(tar => tar.id === id);
+    if (!t) return;
+
+    document.getElementById('editTariffId').value = t.id;
+    document.getElementById('tariffModalTitle').textContent = 'Редактировать тариф';
+    document.getElementById('editTariffTitle').value = t.name || '';
+    document.getElementById('editTariffConnFee').value = t.connectionFee || '0';
+    document.getElementById('editTariffRouter').value = t.routerRental || '0';
+    document.getElementById('editTariffTvBox').value = t.tvBoxRental || '0';
+    document.getElementById('editTariffExtra').value = t.extraDetails || '';
+
+    document.getElementById('editTariffMobileIncluded').checked = !!t.mobileIncluded;
+    document.getElementById('editTariffMobileGb').value = t.mobileInternetGb || '';
+    document.getElementById('editTariffMobileMin').value = t.mobileMinutes || '';
+    document.getElementById('editTariffMobileSms').value = t.mobileSms || '';
+
+    // Speeds
+    const speedContainer = document.getElementById('tariffSpeedsContainer');
+    speedContainer.innerHTML = '';
+    if (t.speeds && t.speeds.length > 0) {
+        t.speeds.forEach(s => {
+            const parts = s.speed.split(' ');
+            const val = parts[0];
+            const unit = parts.length > 1 ? parts.slice(1).join(' ') : 'Мбит/с';
+            addSpeedRow(val, unit, s.price);
+        });
+    } else {
+        addSpeedRow();
+    }
+
+    // Services
+    const serviceContainer = document.getElementById('tariffServicesContainer');
+    serviceContainer.innerHTML = '';
+    if (t.services && t.services.length > 0) {
+        t.services.forEach(svc => addServiceRow(svc));
+    }
+
+    showModal('tariffModal');
+}
+
+async function saveTariff() {
+    const id = document.getElementById('editTariffId').value;
+    const name = document.getElementById('editTariffTitle').value;
+
+    if (!name) {
+        alert('Введите название тарифа');
+        return;
+    }
+
+    const speeds = [];
+    document.querySelectorAll('.speed-row').forEach(row => {
+        const val = row.querySelector('.speed-val').value;
+        const unit = row.querySelector('.speed-unit').value;
+        const price = row.querySelector('.speed-price').value;
+        if (val && price) {
+            speeds.push({ speed: `${val} ${unit}`, price: price });
+        }
+    });
+
+    const services = [];
+    document.querySelectorAll('.service-text').forEach(input => {
+        if (input.value.trim()) services.push(input.value.trim());
+    });
+
+    const data = {
+        name: name,
+        connectionFee: document.getElementById('editTariffConnFee').value,
+        routerRental: document.getElementById('editTariffRouter').value,
+        tvBoxRental: document.getElementById('editTariffTvBox').value,
+        extraDetails: document.getElementById('editTariffExtra').value,
+        mobileIncluded: document.getElementById('editTariffMobileIncluded').checked,
+        mobileInternetGb: document.getElementById('editTariffMobileGb').value,
+        mobileMinutes: document.getElementById('editTariffMobileMin').value,
+        mobileSms: document.getElementById('editTariffMobileSms').value,
+        speeds: speeds,
+        services: services
+    };
+
+    try {
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `${API_BASE}/tariffs/${id}` : `${API_BASE}/tariffs`;
+
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+            console.log('[Admin Panel] Tariff saved successfully');
+            await loadTariffs();
+            renderTariffs();
+            closeModal('tariffModal');
+        } else {
+            const errData = await response.json().catch(() => ({}));
+            console.error('[Admin Panel] Save tariff failed:', response.status, errData);
+            alert(`Ошибка при сохранении: ${errData.error || response.statusText || response.status}`);
+        }
+    } catch (error) {
+        console.error('Error saving tariff:', error);
+        alert('Ошибка при сохранении: Проверьте соединение с сервером');
+    }
 }
 
 // ========== EXPORT (ЗАГРУЗИТЬ) ==========
@@ -802,3 +1170,81 @@ function filterApplications() {
         </tr>
     `).join('');
 }
+
+// ========== DISCOUNT ACTIONS ==========
+function showDiscountModal() {
+    console.log('Attempting to open discount modal');
+    try {
+        const list = document.getElementById('discountTariffList');
+        if (!list) {
+            alert('Ошибка: Элемент списка тарифов не найден!');
+            return;
+        }
+
+        if (!tariffs || tariffs.length === 0) {
+            console.warn('No tariffs loaded');
+            list.innerHTML = '<p style="padding:10px">Нет загруженных тарифов</p>';
+        } else {
+            list.innerHTML = tariffs.map(t => `
+                <div style="display: flex; align-items: center; gap: 10px; padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <input type="checkbox" class="discount-checkbox" value="${t.id}" id="chk_${t.id}">
+                    <label for="chk_${t.id}" style="cursor: pointer; flex-grow: 1;">${t.name} (от ${t.speeds[0]?.price || '-'} ₽)</label>
+                </div>
+            `).join('');
+        }
+
+        const input = document.getElementById('discountPercent');
+        if (input) input.value = '';
+
+        showModal('discountModal');
+    } catch (e) {
+        console.error('Error in showDiscountModal:', e);
+        alert('Ошибка при открытии окна: ' + e.message);
+    }
+}
+
+async function applyDiscount() {
+    const percent = parseInt(document.getElementById('discountPercent').value);
+    if (!percent || percent <= 0 || percent > 100) {
+        alert('Введите корректный процент скидки (1-100)');
+        return;
+    }
+
+    const selectedIds = Array.from(document.querySelectorAll('.discount-checkbox:checked')).map(cb => cb.value);
+    if (selectedIds.length === 0) {
+        alert('Выберите хотя бы один тариф');
+        return;
+    }
+
+    if (!confirm(`Применить скидку ${percent}% к выбранным тарифам (${selectedIds.length} шт)? Цена будет окончательно изменена.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/tariffs/discount`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                percent: percent,
+                tariffIds: selectedIds
+            })
+        });
+
+        if (response.ok) {
+            alert('Скидка успешно применена!');
+            closeModal('discountModal');
+            loadTariffs().then(renderTariffs);
+        } else {
+            const err = await response.json();
+            alert('Ошибка: ' + (err.error || 'Не удалось применить скидку'));
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Ошибка подключения к серверу');
+    }
+}
+
+// Ensure functions are globally available
+window.showDiscountModal = showDiscountModal;
+window.applyDiscount = applyDiscount;
+

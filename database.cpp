@@ -99,7 +99,9 @@ void db_init()
     // Создание таблицы sessions
     const char *session_sql = "CREATE TABLE IF NOT EXISTS sessions ("
                               "USER_ID INTEGER PRIMARY KEY NOT NULL,"
-                              "STATE INTEGER NOT NULL);";
+                              "STATE INTEGER NOT NULL,"
+                              "CURRENT_APP_ID INTEGER DEFAULT 0,"
+                              "REPLY_TO_USER_ID INTEGER DEFAULT 0);";
     if (sqlite3_exec(db_main, session_sql, 0, 0, 0) != SQLITE_OK)
     {
         LOG(LogLevel::L_ERROR, "Failed to create sessions table: " << sqlite3_errmsg(db_main));
@@ -224,6 +226,13 @@ void db_add_application(int64_t user_id, const UserData &data, const std::string
     if (sqlite3_exec(db_main, sql, 0, 0, 0) != SQLITE_OK)
     {
         LOG(LogLevel::L_ERROR, "Failed to add application to DB: " << sqlite3_errmsg(db_main));
+    }
+    else
+    {
+        long long app_id = sqlite3_last_insert_rowid(db_main);
+        user_session_data[user_id].current_application_id = app_id;
+        db_save_user_state(user_id, user_session_data[user_id].state);
+        LOG(LogLevel::INFO, "Application " << app_id << " added for user " << user_id << " and saved to session.");
     }
     sqlite3_free(sql);
 }
@@ -374,6 +383,24 @@ std::optional<ApplicationDataForReport> db_get_application_by_id(int64_t app_id)
             app_data.chat_status = status ? status : "";
 
             result = app_data;
+        }
+    }
+    sqlite3_finalize(stmt);
+    return result;
+}
+
+int64_t db_get_latest_application_id(int64_t user_id)
+{
+    std::string sql = "SELECT ID FROM applications WHERE USER_ID = ? ORDER BY ID DESC LIMIT 1;";
+    sqlite3_stmt *stmt;
+    int64_t result = 0;
+
+    if (sqlite3_prepare_v2(db_main, sql.c_str(), -1, &stmt, 0) == SQLITE_OK)
+    {
+        sqlite3_bind_int64(stmt, 1, user_id);
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            result = sqlite3_column_int64(stmt, 0);
         }
     }
     sqlite3_finalize(stmt);
@@ -574,8 +601,9 @@ AdminWorkMode db_get_admin_work_mode(int64_t user_id)
 // Сохранение состояния пользователя.
 void db_save_user_state(int64_t user_id, UserState state)
 {
-    char *sql = sqlite3_mprintf("INSERT OR REPLACE INTO sessions (USER_ID, STATE) VALUES (%lld, %d);",
-                                (long long)user_id, static_cast<int>(state));
+    UserData &user = user_session_data[user_id];
+    char *sql = sqlite3_mprintf("INSERT OR REPLACE INTO sessions (USER_ID, STATE, CURRENT_APP_ID, REPLY_TO_USER_ID) VALUES (%lld, %d, %lld, %lld);",
+                                (long long)user_id, static_cast<int>(state), (long long)user.current_application_id, (long long)user.reply_to_user_id);
     sqlite3_exec(db_main, sql, 0, 0, 0);
     sqlite3_free(sql);
 }
@@ -583,7 +611,7 @@ void db_save_user_state(int64_t user_id, UserState state)
 // Загрузка состояний пользователей.
 void db_load_user_states(std::map<int64_t, UserData> &session_map)
 {
-    const char *sql = "SELECT USER_ID, STATE FROM sessions;";
+    const char *sql = "SELECT USER_ID, STATE, CURRENT_APP_ID, REPLY_TO_USER_ID FROM sessions;";
     sqlite3_stmt *stmt;
     if (sqlite3_prepare_v2(db_main, sql, -1, &stmt, 0) == SQLITE_OK)
     {
@@ -591,7 +619,12 @@ void db_load_user_states(std::map<int64_t, UserData> &session_map)
         {
             int64_t user_id = sqlite3_column_int64(stmt, 0);
             auto state = static_cast<UserState>(sqlite3_column_int(stmt, 1));
+            long long current_app_id = sqlite3_column_int64(stmt, 2);
+            int64_t reply_to_user_id = sqlite3_column_int64(stmt, 3);
+
             session_map[user_id].state = state;
+            session_map[user_id].current_application_id = current_app_id;
+            session_map[user_id].reply_to_user_id = reply_to_user_id;
         }
     }
     sqlite3_finalize(stmt);
@@ -694,7 +727,10 @@ void db_add_chat_message(long long application_id, const ChatMessage &message)
 {
     char *sql = sqlite3_mprintf("INSERT INTO conversations (APPLICATION_ID, SENDER, MESSAGE) VALUES (%lld, %Q, %Q);",
                                 application_id, message.sender.c_str(), message.text.c_str());
-    sqlite3_exec(db_main, sql, 0, 0, 0);
+    if (sqlite3_exec(db_main, sql, 0, 0, 0) != SQLITE_OK)
+    {
+        LOG(LogLevel::L_ERROR, "Failed to add chat message: " << sqlite3_errmsg(db_main));
+    }
     sqlite3_free(sql);
 }
 
@@ -703,7 +739,10 @@ std::vector<ChatMessage> db_get_chat_history(long long application_id)
 {
     std::vector<ChatMessage> history;
     char *sql = sqlite3_mprintf("SELECT SENDER, MESSAGE, TIMESTAMP FROM conversations WHERE APPLICATION_ID = %lld ORDER BY TIMESTAMP ASC;", application_id);
-    sqlite3_exec(db_main, sql, db_chat_history_callback, &history, 0);
+    if (sqlite3_exec(db_main, sql, db_chat_history_callback, &history, 0) != SQLITE_OK)
+    {
+        LOG(LogLevel::L_ERROR, "Failed to get chat history: " << sqlite3_errmsg(db_main));
+    }
     sqlite3_free(sql);
     return history;
 }
